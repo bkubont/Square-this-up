@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.data/
+*.log
+backups/
+release/
+.agents/
+.claude/
+.codex/
+skills-lock.json

@@ -1,0 +1,71 @@
+{
+  "name": "Job",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Estimate",
+        "Scheduled",
+        "In Progress",
+        "Waiting on Materials",
+        "Completed",
+        "Paid"
+      ],
+      "default": "Estimate"
+    },
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "estimate_amount": {
+      "type": "number"
+    },
+    "invoice_amount": {
+      "type": "number"
+    },
+    "deposit_amount": {
+      "type": "number"
+    },
+    "materials_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "done": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "title",
+    "client_id"
+  ]
+}

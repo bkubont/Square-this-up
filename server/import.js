@@ -1,0 +1,72 @@
+import 'dotenv/config';
+import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import { openDatabase, migrate } from './db.js';
+import { emailSchema } from './security.js';
+import { saveRecord, schemas } from './domain.js';
+
+// Offline import only: never fetch arbitrary URLs from an uploaded export.
+// Base44 exports can be normalized to { Client: [], Job: [], TimelineEntry: [], files: [] }.
+// Files use { id, mime, content: base64, source_url? }; source_url maps old photo URLs.
+export async function importData(db, email, input) {
+  const [user] = await db.all('SELECT id FROM users WHERE email = ?', [emailSchema.parse(email)]);
+  if (!user) throw new Error('Create the destination account before importing');
+  const records = input.version === 1 ? input.records : Object.keys(schemas).flatMap(entity => (input[entity] || []).map(row => ({ ...row, entity })));
+  if (!Array.isArray(records) || !records.length) throw new Error('No records found in the import');
+  const files = input.files || [];
+  if (!Array.isArray(files)) throw new Error('Invalid file collection');
+  await db.transaction(async tx => {
+    await tx.all('SELECT id FROM users WHERE id = ?' + (db.dialect === 'mysql' ? ' FOR UPDATE' : ''), [user.id]);
+    if ((await tx.all('SELECT id FROM records WHERE owner_id = ?', [user.id])).length || (await tx.all('SELECT id FROM files WHERE owner_id = ?', [user.id])).length)
+      throw new Error('Import requires an empty account to prevent duplicate or overwritten data');
+    const fileMap = new Map();
+    let total = 0;
+    for (const file of files) {
+      if (!['image/jpeg','image/png','image/webp'].includes(file.mime) || typeof file.content !== 'string') throw new Error('Unsupported imported file');
+      const bytes = Buffer.from(file.content, 'base64');
+      total += bytes.length;
+      if (bytes.length > 4 * 1024 * 1024 || total > Number(process.env.ACCOUNT_STORAGE_MB || 100) * 1024 * 1024) throw new Error('Imported photos exceed the storage limit');
+      const id = randomUUID();
+      await tx.run('INSERT INTO files (id, owner_id, mime, content, size) VALUES (?, ?, ?, ?, ?)', [id, user.id, file.mime, bytes, bytes.length]);
+      fileMap.set(`/api/files/${file.id}`, `/api/files/${id}`);
+      if (file.source_url) fileMap.set(file.source_url, `/api/files/${id}`);
+    }
+    const ids = new Map();
+    for (const entity of ['Client','Job','TimelineEntry']) {
+      for (const record of records.filter(row => row.entity === entity)) {
+        if (typeof record.id !== 'string' || ids.has(`${entity}:${record.id}`)) throw new Error('Missing or duplicate source ID');
+        const data = { ...record };
+        if (entity === 'Job') {
+          data.client_id = ids.get(`Client:${record.client_id}`);
+          if (!data.client_id) throw new Error('Job references a missing client');
+        }
+        if (entity === 'TimelineEntry') {
+          data.job_id = ids.get(`Job:${record.job_id}`);
+          if (!data.job_id) throw new Error('Timeline entry references a missing job');
+        }
+        if (data.photo_url) {
+          data.photo_url = fileMap.get(record.photo_url);
+          if (!data.photo_url) throw new Error('A photo is missing. Add its bytes and source_url to the files collection before importing.');
+        }
+        const saved = await saveRecord(tx, user.id, entity, data);
+        ids.set(`${entity}:${record.id}`, saved.id);
+        if (record.created_date) {
+          const created = new Date(record.created_date);
+          const updated = new Date(record.updated_date || record.created_date);
+          if (isNaN(created.getTime()) || isNaN(updated.getTime())) throw new Error('Invalid source timestamp');
+          await tx.run('UPDATE records SET created_date = ?, updated_date = ? WHERE id = ? AND owner_id = ?', [created.toISOString(), updated.toISOString(), saved.id, user.id]);
+        }
+      }
+    }
+    if (records.some(row => !Object.hasOwn(schemas, row.entity))) throw new Error('Unknown entity in import');
+  });
+  return records.length;
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const [email, filename] = process.argv.slice(2);
+  if (!email || !filename) throw new Error('Usage: npm run data:import -- user@example.com path/to/export.json');
+  const db = await openDatabase();
+  try { await migrate(db); const count = await importData(db, email, JSON.parse(await readFile(filename, 'utf8'))); console.log(`Imported ${count} records.`); }
+  finally { await db.close(); }
+}

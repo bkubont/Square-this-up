@@ -1,0 +1,51 @@
+import { preparePhoto } from '@/lib/preparePhoto';
+async function request(path, options = {}) {
+  let response;
+  try {
+    response = await fetch(`/api${path}`, { credentials: 'same-origin', ...options,
+      headers: options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' } });
+  } catch {
+    const error = new Error('Could not reach the server. Check your connection and try again.');
+    window.dispatchEvent(new CustomEvent('api-error', { detail: error }));
+    throw error;
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = Object.assign(new Error(data.message || 'Request failed'), { status: response.status });
+    window.dispatchEvent(new CustomEvent('api-error', { detail: error }));
+    throw error;
+  }
+  return data;
+}
+const post = (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) });
+const entity = name => ({
+  async filter(filters = {}, sort = '-created_date', limit = 200) {
+    const records = [];
+    for (let offset = 0; ; offset += limit) {
+      const params = new URLSearchParams({ ...filters, sort, limit: String(limit), offset: String(offset) });
+      const page = await request(`/entities/${name}?${params}`);
+      records.push(...page);
+      if (page.length < limit) return records;
+    }
+  },
+  list(sort = '-created_date', limit = 200) { return this.filter({}, sort, limit); },
+  get(id) { return request(`/entities/${name}/${encodeURIComponent(id)}`); },
+  create(data) { return post(`/entities/${name}`, data); },
+  update(id, data) { return request(`/entities/${name}/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(data) }); },
+  delete(id) { return request(`/entities/${name}/${encodeURIComponent(id)}`, { method: 'DELETE' }); },
+});
+export const api = {
+  entities: { Client: entity('Client'), Job: entity('Job'), TimelineEntry: entity('TimelineEntry') },
+  auth: {
+    me: () => request('/auth/me'),
+    loginViaEmailPassword: (email, password) => post('/auth/login', { email, password }),
+    register: data => post('/auth/register', data),
+    logout: () => post('/auth/logout', {}),
+    resetPasswordRequest: email => post('/auth/forgot-password', { email }),
+    resetPassword: data => post('/auth/reset-password', data),
+  },
+  async uploadFile({ file }) {
+    const form = new FormData(); form.append('file', await preparePhoto(file));
+    return request('/files', { method: 'POST', body: form });
+  },
+};

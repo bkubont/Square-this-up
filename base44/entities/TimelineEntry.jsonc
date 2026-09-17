@@ -1,0 +1,50 @@
+{
+  "name": "TimelineEntry",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "note",
+        "photo",
+        "receipt",
+        "document",
+        "estimate_sent",
+        "deposit_received",
+        "invoice_sent",
+        "payment_received",
+        "status_change",
+        "checklist"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "before",
+        "after",
+        "work",
+        "receipt",
+        "document",
+        "note",
+        "financial"
+      ],
+      "default": "note"
+    },
+    "amount": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "job_id",
+    "type"
+  ]
+}
