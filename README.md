@@ -19,6 +19,8 @@ Each invited account has separate clients, jobs, timeline entries and files. Inv
 
 ## Hostinger deployment
 
+Hostinger builds this source on the server with `NODE_ENV=production`. Vite, its React plugin, Tailwind, PostCSS and Autoprefixer are therefore regular dependencies so they remain available even when npm omits development dependencies. Keep Node.js 24 selected. A `vite: not found` build failure should be addressed by uploading the corrected package and lockfile, not by downgrading Node.js.
+
 Use an available Node.js web app slot on the existing Business plan. Keep the app separate from existing business websites, for example on jobs.yourdomain.com.
 
 1. Create a dedicated MySQL database and database user in hPanel. Confirm database capacity and max_allowed_packet of at least 8 MB (uploads are limited to 4 MB). Photos live in the files table, so database limits matter separately from the advertised website disk space. Start with ACCOUNT_STORAGE_MB=100; raise only after checking database and backup limits.

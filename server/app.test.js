@@ -107,6 +107,27 @@ test('export restores relationships and photos; invalid imports roll back', asyn
   const [c] = await db.all('SELECT id FROM users WHERE email = ?', ['c@example.com']);
   assert.equal((await db.all('SELECT id FROM records WHERE owner_id = ?', [c.id])).length, 0);
 });
+test('client address line two persists through edits and backup restore, and is optional for existing clients', async t => {
+  const { db, request, register } = await fixture(t);
+  const a = await register('address@example.com');
+  await register('restore-address@example.com');
+  const client = (await request('/entities/Client', { method: 'POST', cookie: a.cookie, data: { name: 'Address test', address: '123 Oak St' } })).data;
+  assert.equal(client.address_line2, undefined);
+  const updated = await request(`/entities/Client/${client.id}`, { method: 'PATCH', cookie: a.cookie, data: { address_line2: 'Suite 2, Springfield, IL 62701' } });
+  assert.equal(updated.status, 200);
+  await request(`/entities/Client/${client.id}`, { method: 'PATCH', cookie: a.cookie, data: { phone: '555-1234' } });
+  const saved = (await request(`/entities/Client/${client.id}`, { cookie: a.cookie })).data;
+  assert.equal(saved.address, '123 Oak St');
+  assert.equal(saved.address_line2, 'Suite 2, Springfield, IL 62701');
+  const backup = (await request('/export', { cookie: a.cookie })).data;
+  await importData(db, 'restore-address@example.com', backup);
+  const [owner] = await db.all('SELECT id FROM users WHERE email = ?', ['restore-address@example.com']);
+  const [restored] = await db.all('SELECT data FROM records WHERE owner_id = ?', [owner.id]);
+  assert.equal(JSON.parse(restored.data).address_line2, saved.address_line2);
+  await request(`/entities/Client/${client.id}`, { method: 'PATCH', cookie: a.cookie, data: { address_line2: '' } });
+  assert.equal((await request(`/entities/Client/${client.id}`, { cookie: a.cookie })).data.address_line2, '');
+});
+
 test('invalid inputs, forbidden file types, expired invitations and login throttling', async t => {
   const { db, request, register } = await fixture(t);
   const a = await register('a@example.com');

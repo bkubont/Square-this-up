@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function ClientFormDialog({ open, onOpenChange, onSave, client }) {
-  const [form, setForm] = useState({ name: "", address: "", phone: "", email: "", notes: "" });
+  const [form, setForm] = useState({ name: "", address: "", address_line2: "", phone: "", email: "", notes: "" });
 
   useEffect(() => {
-    if (open) setForm(client || { name: "", address: "", phone: "", email: "", notes: "" });
+    if (open) setForm({ name: "", address: "", address_line2: "", phone: "", email: "", notes: "", ...client });
   }, [open, client]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -21,7 +21,7 @@ export default function ClientFormDialog({ open, onOpenChange, onSave, client })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{client ? "Edit Client" : "New Client"}</DialogTitle>
         </DialogHeader>
@@ -31,8 +31,12 @@ export default function ClientFormDialog({ open, onOpenChange, onSave, client })
             <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="John Smith" />
           </div>
           <div>
-            <Label>Address</Label>
-            <Input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="123 Oak St" />
+            <Label htmlFor="client-address">Address line 1</Label>
+            <Input id="client-address" autoComplete="address-line1" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="123 Oak St" />
+          </div>
+          <div>
+            <Label htmlFor="client-address-line2">Address line 2 (optional)</Label>
+            <Input id="client-address-line2" autoComplete="address-line2" value={form.address_line2} onChange={(e) => set("address_line2", e.target.value)} placeholder="Apt / suite, city, state, ZIP" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

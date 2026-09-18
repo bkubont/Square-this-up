@@ -1,7 +1,8 @@
+import ClientAddress from "@/components/ClientAddress";
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
-import { ArrowLeft, Pencil, StickyNote, Send, CheckCircle2, Trash2, MapPin } from "lucide-react";
+import { ArrowLeft, Pencil, StickyNote, Send, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -128,10 +129,10 @@ export default function JobDetail() {
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-slate-900">{job.title}</h1>
             {client && (
-              <Link to={`/clients/${client.id}`} className="text-sm text-slate-500 hover:text-amber-600 flex items-center gap-1 mt-0.5">
-                {client.name}
-                {client.address && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" />{client.address}</span>}
-              </Link>
+              <div className="mt-1 space-y-1">
+                <Link to={`/clients/${client.id}`} className="text-sm text-slate-500 hover:text-amber-600">{client.name}</Link>
+                <ClientAddress client={client} />
+              </div>
             )}
           </div>
           <Select value={job.status} onValueChange={changeStatus}>

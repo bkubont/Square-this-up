@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
-import { ArrowLeft, Phone, Mail, MapPin, Plus, Pencil, StickyNote, ChevronRight } from "lucide-react";
+import { ArrowLeft, Phone, Mail, Plus, Pencil, StickyNote, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/StatusBadge";
 import ClientFormDialog from "@/components/ClientFormDialog";
 import JobFormDialog from "@/components/JobFormDialog";
+import ClientAddress from "@/components/ClientAddress";
 import { money } from "@/lib/format";
 
 export default function ClientDetail() {
@@ -61,7 +62,7 @@ export default function ClientDetail() {
           </Button>
         </div>
         <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-          {client.address && <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-slate-400" /> {client.address}</div>}
+          <ClientAddress client={client} />
           {client.phone && <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-400" /> {client.phone}</div>}
           {client.email && <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-slate-400" /> {client.email}</div>}
           {client.notes && <div className="flex items-start gap-2 mt-2 pt-2 border-t border-slate-100"><StickyNote className="w-4 h-4 text-slate-400 mt-0.5" /> <span>{client.notes}</span></div>}

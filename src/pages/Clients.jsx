@@ -1,3 +1,4 @@
+import { addressLines } from "@/lib/address";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
@@ -76,9 +77,9 @@ export default function Clients() {
                 </span>
               </div>
               <div className="mt-2 space-y-1 text-sm text-slate-500">
-                {c.address && (
+                {addressLines(c).length > 0 && (
                   <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" /> {c.address}
+                    <MapPin className="w-3.5 h-3.5 shrink-0" /> <span className="break-words">{addressLines(c).join(", ")}</span>
                   </div>
                 )}
                 {c.phone && (

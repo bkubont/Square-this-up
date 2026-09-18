@@ -6,7 +6,7 @@ const id = z.string().min(1).max(36);
 const money = z.number().finite().min(0).max(1e12);
 const date = z.string().refine(v => v === '' || (/^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v))), 'Invalid date');
 export const schemas = {
-  Client: z.object({ name: z.string().trim().min(1).max(250), address: text.optional(), phone: text.optional(), email: text.optional(), notes: text.optional() }),
+  Client: z.object({ name: z.string().trim().min(1).max(250), address: text.optional(), address_line2: text.optional(), phone: text.optional(), email: text.optional(), notes: text.optional() }),
   Job: z.object({ title: z.string().trim().min(1).max(250), client_id: id, client_name: text.optional(), description: text.optional(),
     status: z.enum(['Estimate','Scheduled','In Progress','Waiting on Materials','Completed','Paid']).default('Estimate'),
     start_date: date.optional(), end_date: date.optional(), estimate_amount: money.optional(), invoice_amount: money.optional(),
