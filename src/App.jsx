@@ -14,6 +14,10 @@ import Clients from '@/pages/Clients';
 import ClientDetail from '@/pages/ClientDetail';
 import JobDetail from '@/pages/JobDetail';
 import AllJobs from '@/pages/AllJobs';
+import Schedule from '@/pages/Schedule';
+import Money from '@/pages/Money';
+import Estimates from '@/pages/Estimates';
+import Invoices from '@/pages/Invoices';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -45,6 +49,10 @@ const AuthenticatedApp = () => {
           <Route path="/clients/:id" element={<ClientDetail />} />
           <Route path="/jobs" element={<AllJobs />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/schedule" element={<Schedule />} />
+          <Route path="/money" element={<Money />} />
+          <Route path="/estimates" element={<Estimates />} />
+          <Route path="/invoices" element={<Invoices />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

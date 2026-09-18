@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const STATUSES = ["Estimate", "Scheduled", "In Progress", "Waiting on Materials", "Completed", "Paid"];
+const STATUSES = ["Estimate", "Accepted", "Scheduled", "In Progress", "Waiting on Materials", "Completed", "Paid"];
 
 export default function JobFormDialog({ open, onOpenChange, onSave, job = null, clients, defaultClientId = "" }) {
   const [form, setForm] = useState({
@@ -17,6 +17,8 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
     start_date: "",
     end_date: "",
     estimate_amount: "",
+    invoice_amount: "",
+    deposit_amount: "",
     notes: "",
   });
 
@@ -27,6 +29,8 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
           ? {
               ...job,
               estimate_amount: job.estimate_amount ?? "",
+              invoice_amount: job.invoice_amount ?? "",
+              deposit_amount: job.deposit_amount ?? "",
               start_date: job.start_date || "",
               end_date: job.end_date || "",
             }
@@ -38,6 +42,8 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
               start_date: "",
               end_date: "",
               estimate_amount: "",
+              invoice_amount: "",
+              deposit_amount: "",
               notes: "",
             }
       );
@@ -51,6 +57,8 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
     onSave({
       ...form,
       estimate_amount: form.estimate_amount ? Number(form.estimate_amount) : undefined,
+      invoice_amount: form.invoice_amount ? Number(form.invoice_amount) : undefined,
+      deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : undefined,
     });
   };
 
@@ -108,6 +116,10 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
                 onChange={(e) => set("estimate_amount", e.target.value)}
                 placeholder="0"
               />
+            </div>
+            <div>
+              <Label>Deposit $</Label>
+              <Input type="number" value={form.deposit_amount} onChange={(e) => set("deposit_amount", e.target.value)} placeholder="0" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

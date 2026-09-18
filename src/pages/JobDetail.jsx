@@ -13,7 +13,7 @@ import Checklist from "@/components/Checklist";
 import FinancialPanel from "@/components/FinancialPanel";
 import JobFormDialog from "@/components/JobFormDialog";
 
-const STATUSES = ["Estimate", "Scheduled", "In Progress", "Waiting on Materials", "Completed", "Paid"];
+const STATUSES = ["Estimate", "Accepted", "Scheduled", "In Progress", "Waiting on Materials", "Completed", "Paid"];
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -159,6 +159,7 @@ export default function JobDetail() {
             <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Quick Actions</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <QuickBtn label="Estimate Sent" icon={Send} onClick={() => quickAction("estimate_sent", "Estimate sent to client")} tint="bg-purple-50 text-purple-700 border-purple-200" />
+              <QuickBtn label="Accepted" icon={CheckCircle2} onClick={() => changeStatus("Accepted")} tint="bg-cyan-50 text-cyan-700 border-cyan-200" />
               <QuickBtn label="Deposit" icon={CheckCircle2} onClick={() => quickAction("deposit_received", "Deposit received")} tint="bg-emerald-50 text-emerald-700 border-emerald-200" />
               <QuickBtn label="Invoice Sent" icon={Send} onClick={() => quickAction("invoice_sent", "Invoice sent to client")} tint="bg-purple-50 text-purple-700 border-purple-200" />
               <QuickBtn label="Mark Paid" icon={CheckCircle2} onClick={() => changeStatus("Paid")} tint="bg-slate-100 text-slate-700 border-slate-200" />

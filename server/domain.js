@@ -8,7 +8,7 @@ const date = z.string().refine(v => v === '' || (/^\d{4}-\d{2}-\d{2}$/.test(v) &
 export const schemas = {
   Client: z.object({ name: z.string().trim().min(1).max(250), address: text.optional(), address_line2: text.optional(), phone: text.optional(), email: text.optional(), notes: text.optional() }),
   Job: z.object({ title: z.string().trim().min(1).max(250), client_id: id, client_name: text.optional(), description: text.optional(),
-    status: z.enum(['Estimate','Scheduled','In Progress','Waiting on Materials','Completed','Paid']).default('Estimate'),
+    status: z.enum(['Estimate','Accepted','Scheduled','In Progress','Waiting on Materials','Completed','Paid']).default('Estimate'),
     start_date: date.optional(), end_date: date.optional(), estimate_amount: money.optional(), invoice_amount: money.optional(),
     deposit_amount: money.optional(), materials_cost: money.optional(), notes: text.optional(),
     checklist: z.array(z.object({ text, done: z.boolean() })).max(1000).optional() }),
