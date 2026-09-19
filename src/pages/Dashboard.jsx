@@ -61,23 +61,26 @@ export default function Dashboard() {
   return (
     <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)] lg:min-h-full">
       {/*
-        Atmosphere mark: size with vmin so the *visible* crop grows with the pane.
-        Prior rem bumps failed because -right/-top offsets grew in lockstep, keeping
-        the same clipped corner on screen. Keep modest spill so ~2× more square shows.
+        Atmosphere mark — visible size, not just CSS rem.
+        Tailwind preflight sets img{max-width:100%;height:auto}; rem bumps also failed
+        when -right/-top grew in lockstep (same clipped crop). Inline size + scale(2)
+        forces ~2× on-screen mark vs the prior contained diamond.
       */}
       <img
         src={BRAND_ASSETS.mark}
         alt=""
         aria-hidden="true"
         draggable={false}
-        className="pointer-events-none select-none absolute z-0 max-w-none opacity-[0.34] md:opacity-[0.38]
-          w-[120vmin] h-[120vmin]
-          sm:w-[130vmin] sm:h-[130vmin]
-          lg:w-[140vmin] lg:h-[140vmin]
-          right-[-8vmin] top-[-12vmin]
-          sm:right-[-10vmin] sm:top-[-14vmin]
-          lg:right-[-12vmin] lg:top-[-16vmin]
-          -rotate-[24deg] origin-center"
+        className="pointer-events-none select-none absolute z-0 opacity-[0.34] md:opacity-[0.38]"
+        style={{
+          width: "100vmin",
+          height: "100vmin",
+          maxWidth: "none",
+          right: "-8vmin",
+          top: "-12vmin",
+          transform: "rotate(-24deg) scale(2)",
+          transformOrigin: "70% 30%",
+        }}
       />
 
       <div className="relative z-10 p-4 lg:p-8 max-w-5xl mx-auto">
