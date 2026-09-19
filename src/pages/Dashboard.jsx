@@ -13,6 +13,7 @@ import {
   moneySummary,
   paymentsByJobId,
 } from "@/lib/jobFilters";
+import { BRAND_ASSETS } from "@/lib/brand";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { cn } from "@/lib/utils";
 import { statusCardClass } from "@/lib/statusColors";
@@ -58,47 +59,63 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-4 lg:p-8 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Today</h1>
-        <p className="text-muted-foreground text-sm">
-          {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-        </p>
+    <div className="relative overflow-hidden p-4 lg:p-8 max-w-5xl mx-auto">
+      {/* Oversized angled brand mark — decorative atmosphere; tiles stay above */}
+      <img
+        src={BRAND_ASSETS.markDark}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="pointer-events-none select-none absolute z-0 opacity-40 md:opacity-[0.45]
+          w-[min(92vw,26rem)] h-[min(92vw,26rem)]
+          sm:w-[min(80vw,34rem)] sm:h-[min(80vw,34rem)]
+          lg:w-[42rem] lg:h-[42rem]
+          -right-20 -top-12 sm:-right-28 sm:-top-16 lg:-right-36 lg:-top-20
+          -rotate-[22deg] origin-center drop-shadow-sm"
+      />
+
+      <div className="relative z-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Today</h1>
+          <p className="text-muted-foreground text-sm">
+            {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <MoneyTile loading={loading} buckets={moneyBuckets} />
+          <JobsTile loading={loading} total={jobs.length} counts={statusCounts} />
+          <ActionItemsTile loading={loading} count={actionItems.length} items={actionItems.slice(0, 3)} />
+        </div>
+
+        <Section title="Today's Jobs">
+          {loading ? (
+            <Loading />
+          ) : todayJobs.length ? (
+            <div className="space-y-2">
+              {todayJobs.map((j) => (
+                <JobRow key={j.id} job={j} paymentsLogged={paymentsMap[j.id] || 0} />
+              ))}
+            </div>
+          ) : (
+            <Empty text="No jobs scheduled for today." />
+          )}
+        </Section>
+
+        <Section title="Active Jobs">
+          {loading ? (
+            <Loading />
+          ) : active.length ? (
+            <div className="space-y-2">
+              {active.map((j) => (
+                <JobRow key={j.id} job={j} paymentsLogged={paymentsMap[j.id] || 0} />
+              ))}
+            </div>
+          ) : (
+            <Empty text="No active jobs. Create one from Clients." />
+          )}
+        </Section>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-        <MoneyTile loading={loading} buckets={moneyBuckets} />
-        <JobsTile loading={loading} total={jobs.length} counts={statusCounts} />
-        <ActionItemsTile loading={loading} count={actionItems.length} items={actionItems.slice(0, 3)} />
-      </div>
-
-      <Section title="Today's Jobs">
-        {loading ? (
-          <Loading />
-        ) : todayJobs.length ? (
-          <div className="space-y-2">
-            {todayJobs.map((j) => (
-              <JobRow key={j.id} job={j} paymentsLogged={paymentsMap[j.id] || 0} />
-            ))}
-          </div>
-        ) : (
-          <Empty text="No jobs scheduled for today." />
-        )}
-      </Section>
-
-      <Section title="Active Jobs">
-        {loading ? (
-          <Loading />
-        ) : active.length ? (
-          <div className="space-y-2">
-            {active.map((j) => (
-              <JobRow key={j.id} job={j} paymentsLogged={paymentsMap[j.id] || 0} />
-            ))}
-          </div>
-        ) : (
-          <Empty text="No active jobs. Create one from Clients." />
-        )}
-      </Section>
     </div>
   );
 }
