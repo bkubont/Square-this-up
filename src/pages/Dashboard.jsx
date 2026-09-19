@@ -60,17 +60,23 @@ export default function Dashboard() {
 
   return (
     <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)] lg:min-h-full">
-      {/* Oversized angled brand mark — atmosphere-dominant across the main pane */}
+      {/*
+        Atmosphere mark: size with vmin so the *visible* crop grows with the pane.
+        Prior rem bumps failed because -right/-top offsets grew in lockstep, keeping
+        the same clipped corner on screen. Keep modest spill so ~2× more square shows.
+      */}
       <img
         src={BRAND_ASSETS.mark}
         alt=""
         aria-hidden="true"
         draggable={false}
-        className="pointer-events-none select-none absolute z-0 opacity-[0.36] md:opacity-40
-          w-[min(220vw,96rem)] h-[min(220vw,96rem)]
-          sm:w-[min(180vw,120rem)] sm:h-[min(180vw,120rem)]
-          lg:w-[156rem] lg:h-[156rem]
-          -right-72 -top-48 sm:-right-96 sm:-top-64 lg:-right-[28rem] lg:-top-80
+        className="pointer-events-none select-none absolute z-0 max-w-none opacity-[0.34] md:opacity-[0.38]
+          w-[120vmin] h-[120vmin]
+          sm:w-[130vmin] sm:h-[130vmin]
+          lg:w-[140vmin] lg:h-[140vmin]
+          right-[-8vmin] top-[-12vmin]
+          sm:right-[-10vmin] sm:top-[-14vmin]
+          lg:right-[-12vmin] lg:top-[-16vmin]
           -rotate-[24deg] origin-center"
       />
 
