@@ -19,9 +19,13 @@ export const WAITING_GOLD_HEX = {
 };
 
 export const BRAND_ASSETS = {
+  /** Primary mark (transparent bg) — Dashboard atmosphere + chrome */
+  mark: "/brand/logo-mark.png",
   markLight: "/brand/logo-mark-light.png",
   markDark: "/brand/logo-mark-dark.png",
   markBlack: "/brand/logo-mark-black.png",
   wordmark: "/brand/wordmark.png",
   wordmarkAlt: "/brand/wordmark-alt.png",
+  /** Tagline “LESS CHAOS. MORE LIFE.” (transparent bg) — sidebar footer */
+  tagline: "/brand/less-chaos-more-life.png",
 };

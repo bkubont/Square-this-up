@@ -59,22 +59,22 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="relative overflow-hidden p-4 lg:p-8 max-w-5xl mx-auto">
-      {/* Oversized angled brand mark — decorative atmosphere; tiles stay above */}
+    <div className="relative overflow-hidden min-h-[calc(100dvh-3.5rem)] lg:min-h-full">
+      {/* Oversized angled brand mark — atmosphere-dominant across the main pane */}
       <img
-        src={BRAND_ASSETS.markDark}
+        src={BRAND_ASSETS.mark}
         alt=""
         aria-hidden="true"
         draggable={false}
-        className="pointer-events-none select-none absolute z-0 opacity-40 md:opacity-[0.45]
-          w-[min(92vw,26rem)] h-[min(92vw,26rem)]
-          sm:w-[min(80vw,34rem)] sm:h-[min(80vw,34rem)]
-          lg:w-[42rem] lg:h-[42rem]
-          -right-20 -top-12 sm:-right-28 sm:-top-16 lg:-right-36 lg:-top-20
-          -rotate-[22deg] origin-center drop-shadow-sm"
+        className="pointer-events-none select-none absolute z-0 opacity-[0.36] md:opacity-40
+          w-[min(160vw,48rem)] h-[min(160vw,48rem)]
+          sm:w-[min(130vw,60rem)] sm:h-[min(130vw,60rem)]
+          lg:w-[78rem] lg:h-[78rem]
+          -right-40 -top-28 sm:-right-52 sm:-top-36 lg:-right-64 lg:-top-48
+          -rotate-[24deg] origin-center"
       />
 
-      <div className="relative z-10">
+      <div className="relative z-10 p-4 lg:p-8 max-w-5xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Today</h1>
           <p className="text-muted-foreground text-sm">

@@ -64,9 +64,9 @@ export default function AppLayout() {
         <div className="px-5 py-5 flex items-center justify-between">
           <Link to="/" onClick={() => setOpen(false)} className="flex items-center gap-2.5 min-w-0">
             <img
-              src={BRAND_ASSETS.markLight}
+              src={BRAND_ASSETS.mark}
               alt=""
-              className="w-10 h-10 rounded-lg object-contain shrink-0 bg-black"
+              className="w-10 h-10 rounded-lg object-contain shrink-0"
               width={40}
               height={40}
             />
@@ -106,8 +106,8 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-sidebar-border">
-          <div className="px-2 pb-2 text-xs text-sidebar-muted truncate">{user?.email}</div>
+        <div className="p-3 border-t border-sidebar-border space-y-3">
+          <div className="px-2 pb-1 text-xs text-sidebar-muted truncate">{user?.email}</div>
           <a href="/api/export" download className="block px-2 py-2 text-sm text-sidebar-foreground hover:text-sidebar-accent-foreground">
             Download backup
           </a>
@@ -118,6 +118,13 @@ export default function AppLayout() {
           >
             <LogOut className="w-4 h-4 mr-2" strokeWidth={1.75} /> Sign out
           </Button>
+          <img
+            src={BRAND_ASSETS.tagline}
+            alt="Less chaos. More life."
+            className="w-full h-auto object-contain px-1 pt-1 opacity-95"
+            width={220}
+            height={89}
+          />
         </div>
       </aside>
 
@@ -129,7 +136,7 @@ export default function AppLayout() {
             <Menu className="w-6 h-6" />
           </button>
           <Link to="/" className="flex items-center gap-2 min-w-0 px-2">
-            <img src={BRAND_ASSETS.markLight} alt="" className="w-8 h-8 rounded-md object-contain bg-black shrink-0" width={32} height={32} />
+            <img src={BRAND_ASSETS.mark} alt="" className="w-8 h-8 rounded-md object-contain shrink-0" width={32} height={32} />
             <span className="text-white font-bold truncate text-sm">{PRODUCT_NAME}</span>
           </Link>
           <div className="w-6" />
