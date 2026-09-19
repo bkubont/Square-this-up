@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { openDatabase, migrate } from './db.js';
 import { emailSchema } from './security.js';
-import { saveRecord, schemas } from './domain.js';
+import { saveRecord, saveProfile, schemas } from './domain.js';
 
 // Offline import only: never fetch arbitrary URLs from an uploaded export.
 // Base44 exports can be normalized to { Client: [], Job: [], TimelineEntry: [], files: [] }.
@@ -32,8 +32,16 @@ export async function importData(db, email, input) {
       fileMap.set(`/api/files/${file.id}`, `/api/files/${id}`);
       if (file.source_url) fileMap.set(file.source_url, `/api/files/${id}`);
     }
+    if (input.profile) {
+      const profile = { ...input.profile };
+      if (profile.logo_url) {
+        profile.logo_url = fileMap.get(profile.logo_url);
+        if (!profile.logo_url) throw new Error('A logo is missing. Add its bytes to the files collection before importing.');
+      }
+      await saveProfile(tx, user.id, profile);
+    }
     const ids = new Map();
-    for (const entity of ['Client','Job','TimelineEntry']) {
+    for (const entity of ['Client','Job','Document','TimelineEntry']) {
       for (const record of records.filter(row => row.entity === entity)) {
         if (typeof record.id !== 'string' || ids.has(`${entity}:${record.id}`)) throw new Error('Missing or duplicate source ID');
         const data = { ...record };
@@ -41,9 +49,9 @@ export async function importData(db, email, input) {
           data.client_id = ids.get(`Client:${record.client_id}`);
           if (!data.client_id) throw new Error('Job references a missing client');
         }
-        if (entity === 'TimelineEntry') {
+        if (entity === 'TimelineEntry' || entity === 'Document') {
           data.job_id = ids.get(`Job:${record.job_id}`);
-          if (!data.job_id) throw new Error('Timeline entry references a missing job');
+          if (!data.job_id) throw new Error(`${entity} references a missing job`);
         }
         if (data.photo_url) {
           data.photo_url = fileMap.get(record.photo_url);

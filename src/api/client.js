@@ -35,7 +35,7 @@ const entity = name => ({
   delete(id) { return request(`/entities/${name}/${encodeURIComponent(id)}`, { method: 'DELETE' }); },
 });
 export const api = {
-  entities: { Client: entity('Client'), Job: entity('Job'), TimelineEntry: entity('TimelineEntry') },
+  entities: { Client: entity('Client'), Job: entity('Job'), Document: entity('Document'), TimelineEntry: entity('TimelineEntry') },
   auth: {
     me: () => request('/auth/me'),
     loginViaEmailPassword: (email, password) => post('/auth/login', { email, password }),
@@ -43,6 +43,7 @@ export const api = {
     logout: () => post('/auth/logout', {}),
     resetPasswordRequest: email => post('/auth/forgot-password', { email }),
     resetPassword: data => post('/auth/reset-password', data),
+    updateProfile: data => request('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
   },
   async uploadFile({ file }) {
     const form = new FormData(); form.append('file', await preparePhoto(file));

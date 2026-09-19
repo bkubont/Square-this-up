@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { z } from 'zod';
-import { schemas, fail, decode, getRecord, saveRecord } from './domain.js';
+import { schemas, fail, decode, getRecord, saveRecord, publicUser, profileSchema, saveProfile } from './domain.js';
 import { emailSchema, passwordSchema, passwordHash, verifyPassword, hash, token } from './security.js';
 
 export async function createApp(db, env = process.env) {
@@ -23,11 +23,25 @@ export async function createApp(db, env = process.env) {
     imgSrc: ["'self'", 'data:', 'blob:'], connectSrc: ["'self'"],
     upgradeInsecureRequests: production ? [] : null,
   } }, strictTransportSecurity: production ? undefined : false }));
+  const loopback = hostname => hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  const originAllowed = value => {
+    if (value === origin) return true;
+    // Local Vite (5173) and Express (3000) share localhost cookies but send different Origin headers.
+    if (!production && (!value || value === 'null')) return true;
+    if (production || !value) return false;
+    try {
+      const got = new URL(value);
+      const expected = new URL(origin);
+      return got.protocol === 'http:' && expected.protocol === 'http:' && loopback(got.hostname) && loopback(expected.hostname);
+    } catch {
+      return false;
+    }
+  };
   app.use(cookieParser());
   app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'no-store');
     // Require the configured frontend origin on every mutation, including login.
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('origin') !== origin)
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !originAllowed(req.get('origin')))
       return next(fail(403, 'Invalid request origin'));
     next();
   });
@@ -57,7 +71,7 @@ export async function createApp(db, env = process.env) {
   });
   const requireUser = async (req, res, next) => {
     const value = req.cookies[cookieName];
-    const [user] = value ? await db.all('SELECT users.id, users.email, users.created_date FROM users JOIN sessions ON sessions.user_id = users.id WHERE sessions.token_hash = ? AND sessions.expires_at > ?', [hash(value), Date.now()]) : [];
+    const [user] = value ? await db.all('SELECT users.id, users.email, users.created_date, users.profile FROM users JOIN sessions ON sessions.user_id = users.id WHERE sessions.token_hash = ? AND sessions.expires_at > ?', [hash(value), Date.now()]) : [];
     if (!user) throw fail(401, 'Please log in');
     req.user = user;
     next();
@@ -69,7 +83,7 @@ export async function createApp(db, env = process.env) {
     res.cookie(cookieName, value, { ...cookie, maxAge });
   };
   app.get('/api/health', async (req, res) => { await db.all('SELECT 1 AS ok'); res.json({ ok: true }); });
-  app.get('/api/auth/me', requireUser, (req, res) => res.json(req.user));
+  app.get('/api/auth/me', requireUser, (req, res) => res.json(publicUser(req.user)));
   app.post('/api/auth/login', async (req, res) => {
     const email = emailSchema.parse(req.body.email);
     if (!await limited(`login:${email}`)) throw fail(429, 'Too many attempts. Try again in 15 minutes.');
@@ -98,7 +112,8 @@ export async function createApp(db, env = process.env) {
       const [row] = await tx.all('SELECT * FROM tokens WHERE token_hash = ? AND kind = ? AND email = ? AND expires_at > ?' + lock, [hash(invite), 'invite', email, Date.now()]);
       if (!row) throw fail(400, 'Invitation is invalid or expired');
       if ((await tx.all('SELECT id FROM users WHERE email = ?', [email])).length) throw fail(409, 'Account already exists. Please log in.');
-      await tx.run('INSERT INTO users (id, email, password_hash, created_date) VALUES (?, ?, ?, ?)', [userId, email, digest, new Date().toISOString()]);
+      const profile = profileSchema.parse({ ...req.body.profile, logo_url: undefined });
+      await tx.run('INSERT INTO users (id, email, password_hash, created_date, profile) VALUES (?, ?, ?, ?, ?)', [userId, email, digest, new Date().toISOString(), JSON.stringify(profile)]);
       await tx.run('DELETE FROM tokens WHERE token_hash = ?', [hash(invite)]);
     });
     await session(res, userId);
@@ -137,6 +152,10 @@ export async function createApp(db, env = process.env) {
     res.clearCookie(cookieName, cookie).json({ ok: true });
   });
   app.use('/api', requireUser);
+  app.patch('/api/auth/profile', async (req, res) => {
+    const profile = await saveProfile(db, req.user.id, req.body);
+    res.json({ ...publicUser(req.user), profile });
+  });
   app.param('entity', (req, res, next, entity) => { if (!Object.hasOwn(schemas, entity)) return next(fail(404, 'Unknown record type')); next(); });
   app.get('/api/entities/:entity', async (req, res) => {
     const limit = z.coerce.number().int().min(1).max(500).parse(req.query.limit || 200);
@@ -163,7 +182,9 @@ export async function createApp(db, env = process.env) {
         : req.params.entity === 'TimelineEntry' ? [record] : [];
       if (req.params.entity === 'Client' && (await tx.all('SELECT id FROM records WHERE owner_id = ? AND parent_id = ?', [req.user.id, record.id])).length)
         throw fail(409, 'Delete this client’s jobs first');
-      if (req.params.entity === 'Job') await tx.run('DELETE FROM records WHERE owner_id = ? AND entity = ? AND parent_id = ?', [req.user.id, 'TimelineEntry', record.id]);
+      if (req.params.entity === 'Job') {
+        await tx.run('DELETE FROM records WHERE owner_id = ? AND entity IN (?, ?) AND parent_id = ?', [req.user.id, 'TimelineEntry', 'Document', record.id]);
+      }
       await tx.run('DELETE FROM records WHERE owner_id = ? AND id = ?', [req.user.id, record.id]);
       // Remove files no longer referenced by remaining timeline entries.
       const entries = await tx.all('SELECT data FROM records WHERE owner_id = ? AND entity = ?', [req.user.id, 'TimelineEntry']);
@@ -196,6 +217,7 @@ export async function createApp(db, env = process.env) {
   });
   app.get('/api/export', async (req, res) => {
     const data = await ownedTransaction(req.user.id, async tx => ({ version: 1, exported_at: new Date().toISOString(),
+      profile: publicUser(req.user).profile,
       records: (await tx.all('SELECT * FROM records WHERE owner_id = ?', [req.user.id])).map(row => ({ entity: row.entity, ...decode(row) })),
       files: (await tx.all('SELECT * FROM files WHERE owner_id = ?', [req.user.id])).map(file => ({ id: file.id, mime: file.mime, content: Buffer.from(file.content).toString('base64') })),
     }));

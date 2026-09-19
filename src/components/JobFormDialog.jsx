@@ -16,37 +16,22 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
     client_id: "",
     start_date: "",
     end_date: "",
-    estimate_amount: "",
-    invoice_amount: "",
     deposit_amount: "",
     notes: "",
   });
 
   useEffect(() => {
     if (open) {
-      setForm(
-        job
-          ? {
-              ...job,
-              estimate_amount: job.estimate_amount ?? "",
-              invoice_amount: job.invoice_amount ?? "",
-              deposit_amount: job.deposit_amount ?? "",
-              start_date: job.start_date || "",
-              end_date: job.end_date || "",
-            }
-          : {
-              title: "",
-              description: "",
-              status: "Estimate",
-              client_id: defaultClientId || "",
-              start_date: "",
-              end_date: "",
-              estimate_amount: "",
-              invoice_amount: "",
-              deposit_amount: "",
-              notes: "",
-            }
-      );
+      setForm({
+        title: job?.title || "",
+        description: job?.description || "",
+        status: job?.status || "Estimate",
+        client_id: job?.client_id || defaultClientId || "",
+        start_date: job?.start_date || "",
+        end_date: job?.end_date || "",
+        deposit_amount: job?.deposit_amount ?? "",
+        notes: job?.notes || "",
+      });
     }
   }, [open, job, defaultClientId]);
 
@@ -55,10 +40,14 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
   const submit = () => {
     if (!form.title?.trim() || !form.client_id) return;
     onSave({
-      ...form,
-      estimate_amount: form.estimate_amount ? Number(form.estimate_amount) : undefined,
-      invoice_amount: form.invoice_amount ? Number(form.invoice_amount) : undefined,
+      title: form.title.trim(),
+      description: form.description,
+      status: form.status,
+      client_id: form.client_id,
+      start_date: form.start_date || undefined,
+      end_date: form.end_date || undefined,
       deposit_amount: form.deposit_amount ? Number(form.deposit_amount) : undefined,
+      notes: form.notes,
     });
   };
 
@@ -107,15 +96,6 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label>Estimate $</Label>
-              <Input
-                type="number"
-                value={form.estimate_amount}
-                onChange={(e) => set("estimate_amount", e.target.value)}
-                placeholder="0"
-              />
             </div>
             <div>
               <Label>Deposit $</Label>

@@ -12,6 +12,7 @@ import VoiceRecorder from "@/components/VoiceRecorder";
 import Checklist from "@/components/Checklist";
 import FinancialPanel from "@/components/FinancialPanel";
 import JobFormDialog from "@/components/JobFormDialog";
+import EstimatePanel from "@/components/EstimatePanel";
 
 const STATUSES = ["Estimate", "Accepted", "Scheduled", "In Progress", "Waiting on Materials", "Completed", "Paid"];
 
@@ -65,7 +66,9 @@ export default function JobDetail() {
   };
 
   const changeStatus = async (status) => {
-    await api.entities.Job.update(id, { status });
+    const approvedChanges = (job.change_orders || []).filter((item) => item.status === "approved").reduce((total, item) => total + Number(item.labor_amount || 0) + Number(item.materials_amount || 0), 0);
+    const estimateTotal = Number(job.estimate_labor_amount || 0) + Number(job.estimate_materials_amount || 0) || Number(job.estimate_amount || 0);
+    await api.entities.Job.update(id, { status, ...(status === "Completed" ? { invoice_amount: estimateTotal + approvedChanges, invoice_finalized: true } : {}) });
     await api.entities.TimelineEntry.create({
       job_id: id,
       type: "status_change",
@@ -210,6 +213,7 @@ export default function JobDetail() {
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="before">Before</SelectItem>
                   <SelectItem value="after">After</SelectItem>
+                  <SelectItem value="work">In Progress</SelectItem>
                   <SelectItem value="receipt">Receipts</SelectItem>
                   <SelectItem value="financial">Financial</SelectItem>
                   <SelectItem value="note">Notes</SelectItem>
@@ -222,9 +226,10 @@ export default function JobDetail() {
 
         {/* Right: financials */}
         <div className="space-y-4">
+          <EstimatePanel job={job} />
           <div>
             <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Financials</div>
-            <FinancialPanel job={job} onUpdate={updateJob} onLogPayment={logPayment} />
+            <FinancialPanel job={job} entries={entries} onLogPayment={logPayment} />
           </div>
           {job.notes && (
             <div className="bg-white rounded-xl border border-slate-200 p-4">

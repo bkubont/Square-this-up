@@ -18,14 +18,15 @@ async function fixture(t) {
     return { status: response.status, cookie: response.headers.get('set-cookie')?.split(';')[0], response,
       data: response.headers.get('content-type')?.includes('json') ? await response.json() : await response.arrayBuffer() };
   };
+  const testProfile = { name: 'Owner', city: 'Springfield', state: 'IL', zip: '62701', phone: '555-0100' };
   const register = async email => {
     const invitation = token();
     await db.run('INSERT INTO tokens (token_hash, kind, email, expires_at) VALUES (?, ?, ?, ?)', [hash(invitation), 'invite', email, Date.now() + 60000]);
-    const result = await request('/auth/register', { method: 'POST', data: { email, password: 'strong-password-123', inviteToken: invitation } });
+    const result = await request('/auth/register', { method: 'POST', data: { email, password: 'strong-password-123', inviteToken: invitation, profile: testProfile } });
     assert.equal(result.status, 201);
     return { ...result, invitation };
   };
-  return { db, request, register };
+  return { db, request, register, testProfile };
 }
 test('invitation-only registration, cookie sessions, logout and CSRF protection', async t => {
   const { request, register } = await fixture(t);
@@ -35,6 +36,7 @@ test('invitation-only registration, cookie sessions, logout and CSRF protection'
   assert.match(user.response.headers.get('set-cookie'), /HttpOnly/);
   assert.match(user.response.headers.get('set-cookie'), /SameSite=Lax/);
   assert.equal((await request('/auth/me', { cookie: user.cookie })).data.email, 'a@example.com');
+  assert.equal((await request('/auth/me', { cookie: user.cookie })).data.profile.city, 'Springfield');
   assert.equal((await request('/auth/register', { method: 'POST', data: { email: 'a@example.com', password: 'strong-password-123', inviteToken: user.invitation } })).status, 400);
   assert.equal((await request('/entities/Client', { method: 'POST', cookie: user.cookie, origin: 'https://evil.example', data: { name: 'Attack' } })).status, 403);
   await request('/auth/logout', { method: 'POST', cookie: user.cookie });
@@ -46,12 +48,13 @@ test('accounts cannot read, modify, delete, link or export each other’s data o
   const create = async (entity, data, cookie = a.cookie) => (await request(`/entities/${entity}`, { method: 'POST', data, cookie })).data;
   const client = await create('Client', { name: 'Private client', owner_id: b.data.id });
   const job = await create('Job', { title: 'Private job', client_id: client.id });
+  const document = await create('Document', { type: 'estimate', job_id: job.id, title: 'Private estimate', number: '000001', date: '2026-09-18', line_items: [{ id: 'line-1', name: 'Labor' }] });
   const form = new FormData();
   form.append('file', new Blob([Buffer.from('89504e470d0a1a0a', 'hex')], { type: 'image/png' }), 'photo.png');
   const file = await request('/files', { method: 'POST', cookie: a.cookie, form });
   assert.equal(file.status, 201);
   const entry = await create('TimelineEntry', { job_id: job.id, type: 'photo', category: 'before', photo_url: file.data.file_url });
-  for (const [entity, record] of [['Client', client], ['Job', job], ['TimelineEntry', entry]]) {
+  for (const [entity, record] of [['Client', client], ['Job', job], ['Document', document], ['TimelineEntry', entry]]) {
     assert.deepEqual((await request(`/entities/${entity}`, { cookie: b.cookie })).data, []);
     for (const method of ['GET','PATCH','DELETE']) assert.equal((await request(`/entities/${entity}/${record.id}`, { method, data: method === 'PATCH' ? { text: 'attack' } : undefined, cookie: b.cookie })).status, 404);
   }
@@ -142,4 +145,32 @@ test('invalid inputs, forbidden file types, expired invitations and login thrott
   assert.equal((await request('/files', { method: 'POST', cookie: a.cookie, form: large })).status, 413);
   for (let i = 0; i < 10; i++) assert.equal((await request('/auth/login', { method: 'POST', data: { email: 'a@example.com', password: 'wrong' } })).status, 401);
   assert.equal((await request('/auth/login', { method: 'POST', data: { email: 'a@example.com', password: 'wrong' } })).status, 429);
+});
+
+test('registration requires a business profile and documents stay on the owning job', async t => {
+  const { db, request, register, testProfile } = await fixture(t);
+  const invitation = token();
+  await db.run('INSERT INTO tokens (token_hash, kind, email, expires_at) VALUES (?, ?, ?, ?)', [hash(invitation), 'invite', 'noprofile@example.com', Date.now() + 60000]);
+  assert.equal((await request('/auth/register', { method: 'POST', data: { email: 'noprofile@example.com', password: 'strong-password-123', inviteToken: invitation } })).status, 400);
+  const a = await register('docs@example.com'), b = await register('other-docs@example.com');
+  const client = (await request('/entities/Client', { method: 'POST', cookie: a.cookie, data: { name: 'Pat', address: '7051 Paradise Trail' } })).data;
+  const job = (await request('/entities/Job', { method: 'POST', cookie: a.cookie, data: { title: 'Cabin', client_id: client.id } })).data;
+  const created = await request('/entities/Document', { method: 'POST', cookie: a.cookie, data: {
+    type: 'estimate', job_id: job.id, title: 'Cabin', number: '000102', date: '2026-09-18',
+    line_items: [{ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', name: 'Labor', quantity: 2, price: 75 }],
+  } });
+  assert.equal(created.status, 201);
+  assert.equal(created.data.client_id, client.id);
+  assert.equal(created.data.line_items[0].name, 'Labor');
+  assert.equal((await request('/entities/Document', { method: 'POST', cookie: b.cookie, data: { type: 'invoice', job_id: job.id, title: 'Steal', number: '1', date: '2026-09-18', line_items: [{ id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', name: 'Nope' }] } })).status, 404);
+  const patched = await request('/auth/profile', { method: 'PATCH', cookie: a.cookie, data: { ...testProfile, business_name: 'F&G Home Maintenance', labor_rate: 75 } });
+  assert.equal(patched.status, 200);
+  assert.equal(patched.data.profile.business_name, 'F&G Home Maintenance');
+  assert.equal((await request('/auth/profile', { method: 'PATCH', cookie: a.cookie, origin: 'http://127.0.0.1:5173', data: testProfile })).status, 200);
+  assert.equal((await request('/auth/profile', { method: 'PATCH', cookie: a.cookie, origin: 'http://localhost:3000', data: testProfile })).status, 200);
+  const form = new FormData();
+  form.append('file', new Blob([Buffer.from('89504e470d0a1a0a', 'hex')], { type: 'image/png' }), 'logo.png');
+  const file = await request('/files', { method: 'POST', cookie: a.cookie, form });
+  assert.equal((await request('/auth/profile', { method: 'PATCH', cookie: a.cookie, data: { ...testProfile, logo_url: file.data.file_url } })).status, 200);
+  assert.equal((await request('/auth/profile', { method: 'PATCH', cookie: b.cookie, data: { ...testProfile, logo_url: file.data.file_url } })).status, 400);
 });
