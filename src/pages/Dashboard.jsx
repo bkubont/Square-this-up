@@ -67,10 +67,10 @@ export default function Dashboard() {
         aria-hidden="true"
         draggable={false}
         className="pointer-events-none select-none absolute z-0 opacity-[0.36] md:opacity-40
-          w-[min(160vw,48rem)] h-[min(160vw,48rem)]
-          sm:w-[min(130vw,60rem)] sm:h-[min(130vw,60rem)]
-          lg:w-[78rem] lg:h-[78rem]
-          -right-40 -top-28 sm:-right-52 sm:-top-36 lg:-right-64 lg:-top-48
+          w-[min(220vw,96rem)] h-[min(220vw,96rem)]
+          sm:w-[min(180vw,120rem)] sm:h-[min(180vw,120rem)]
+          lg:w-[156rem] lg:h-[156rem]
+          -right-72 -top-48 sm:-right-96 sm:-top-64 lg:-right-[28rem] lg:-top-80
           -rotate-[24deg] origin-center"
       />
 
