@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
+import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { money, shortDate } from "@/lib/format";
 import { isActiveJob, jobBalance, paymentsByJobId } from "@/lib/jobFilters";
@@ -8,7 +9,7 @@ import { NAV_ICONS } from "@/lib/navIcons";
 import { statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
 
-const ActiveIcon = NAV_ICONS.activeJobs;
+const ActiveIcon = NAV_ICONS.jobs;
 
 export default function ActiveJobs() {
   const [jobs, setJobs] = useState([]);
@@ -31,10 +32,24 @@ export default function ActiveJobs() {
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Active Jobs</h1>
-        <p className="text-sm text-muted-foreground">Estimate, Scheduled, In Progress, or Waiting on Materials</p>
-      </div>
+      <PageHeader
+        title="Jobs"
+        description={
+          loading
+            ? "Estimate, Scheduled, In Progress, or Waiting on Materials"
+            : `${jobs.length} active · Estimate, Scheduled, In Progress, or Waiting on Materials`
+        }
+        secondary={
+          <>
+            <Link to="/jobs" className="text-sm font-medium text-primary hover:underline px-2">
+              All Jobs
+            </Link>
+            <Link to="/jobs/board" className="text-sm font-medium text-primary hover:underline px-2">
+              Board
+            </Link>
+          </>
+        }
+      />
 
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>

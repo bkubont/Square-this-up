@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { Calendar } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { money, shortDate } from "@/lib/format";
 import {
@@ -59,12 +60,10 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 lg:p-8 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Today</h1>
-        <p className="text-muted-foreground text-sm">
-          {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description={new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <MoneyTile loading={loading} buckets={moneyBuckets} />
