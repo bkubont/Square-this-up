@@ -69,7 +69,16 @@ export default function Outstanding() {
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
       <PageHeader
         title="Invoices"
-        description="Invoiced, received, outstanding, waiting for approval, and waiting on payment"
+        description={
+          loading
+            ? "Invoiced, received, outstanding, and waiting buckets"
+            : `${unpaid.length} with balance · ${buckets.waitingPaymentCount} awaiting payment · ${buckets.waitingDocCount} awaiting approval`
+        }
+        secondary={
+          <Link to="/estimates" className="text-sm font-medium text-primary hover:underline px-2">
+            Estimates
+          </Link>
+        }
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">

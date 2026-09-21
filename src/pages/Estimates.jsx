@@ -29,12 +29,22 @@ export default function Estimates() {
   }, []);
 
   const jobById = useMemo(() => Object.fromEntries(jobs.map((j) => [j.id, j])), [jobs]);
+  const awaiting = useMemo(() => estimates.filter((e) => e.status === "sent").length, [estimates]);
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
       <PageHeader
         title="Estimates"
-        description={loading ? undefined : `${estimates.length} estimate${estimates.length === 1 ? "" : "s"}`}
+        description={
+          loading
+            ? undefined
+            : `${estimates.length} estimate${estimates.length === 1 ? "" : "s"}${awaiting ? ` · ${awaiting} awaiting approval` : ""}`
+        }
+        secondary={
+          <Link to="/jobs/action-items" className="text-sm font-medium text-primary hover:underline px-2">
+            Action items
+          </Link>
+        }
       />
 
       {loading ? (

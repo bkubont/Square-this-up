@@ -44,6 +44,11 @@ export default function ActionItems() {
             ? "Jobs blocked by materials or waiting on estimate / change-order approval"
             : `${items.length} item${items.length === 1 ? "" : "s"} · materials or approval`
         }
+        secondary={
+          <Link to="/jobs/outstanding" className="text-sm font-medium text-primary hover:underline px-2">
+            Invoices
+          </Link>
+        }
       />
 
       {loading ? (

@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 export default function PlaceholderPage({ title, description, icon: Icon }) {
   return (
     <div className="p-4 lg:p-8 max-w-3xl mx-auto">
-      <PageHeader title={title} description={description || "Coming soon"} />
+      <PageHeader
+        title={title}
+        description={description || "Coming soon"}
+        secondary={
+          <Link to="/" className="text-sm font-medium text-primary hover:underline px-2">
+            Dashboard
+          </Link>
+        }
+      />
       <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-14 text-center">
         {Icon ? <Icon className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" strokeWidth={1.5} aria-hidden="true" /> : null}
         <p className="text-foreground font-medium mb-1">{title} is on the roadmap</p>
