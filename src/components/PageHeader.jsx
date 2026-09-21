@@ -4,8 +4,9 @@ import { cn } from "@/lib/utils";
 /**
  * Universal page header: page name + optional description/count + one primary action slot.
  * Secondary actions/filters go in `secondary`.
+ * @param {{ title: React.ReactNode, description?: React.ReactNode, primaryAction?: React.ReactNode, secondary?: React.ReactNode, className?: string }} props
  */
-export default function PageHeader({ title, description, primaryAction, secondary, className }) {
+export default function PageHeader({ title, description = null, primaryAction = null, secondary = null, className = "" }) {
   return (
     <div className={cn("mb-6 flex flex-wrap items-start justify-between gap-3", className)}>
       <div className="min-w-0">
