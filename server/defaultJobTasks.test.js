@@ -5,6 +5,7 @@ import { openDatabase, migrate } from './db.js';
 import { passwordHash } from './security.js';
 import { saveRecord } from './domain.js';
 import { attachDefaultJobTasks } from './defaultJobTasks.js';
+import { createWorkItemsForLines } from './workItems.js';
 import { PREP_TASK_STEPS, FINAL_WALKTHROUGH_STEPS } from '../shared/taskTemplates.js';
 
 async function createUser(db, email) {
@@ -47,6 +48,37 @@ test('attachDefaultJobTasks adds Prep first and Final walkthrough last with temp
     assert.equal(rows[1].template_key, 'final_walkthrough');
     assert.equal(rows[1].description, 'Final walkthrough');
     assert.deepEqual(rows[1].steps.map((s) => s.text), FINAL_WALKTHROUGH_STEPS.map((s) => s.text));
+  } finally {
+    await db.close();
+  }
+});
+
+test('attachDefaultJobTasks keeps Final walkthrough after signed scope tasks by sort_order', async () => {
+  const db = await openDatabase({ SQLITE_PATH: ':memory:' });
+  try {
+    await migrate(db);
+    const ownerId = await createUser(db, 'order@example.com');
+    const client = await saveRecord(db, ownerId, 'Client', { name: 'Order client', ...CLIENT_ADDR });
+    const job = await saveRecord(db, ownerId, 'Job', { title: 'Order job', client_id: client.id });
+    await attachDefaultJobTasks(db, ownerId, job.id);
+    const estimate = await saveRecord(db, ownerId, 'Estimate', {
+      job_id: job.id,
+      status: 'accepted',
+      lines: [{ id: 'line-1', description: 'Install cabinets', labor_amount: 500 }],
+      accepted_snapshot: { lines: [{ id: 'line-1', description: 'Install cabinets', labor_amount: 500 }] },
+    });
+    await createWorkItemsForLines(db, ownerId, {
+      jobId: job.id,
+      sourceType: 'Estimate',
+      sourceId: estimate.id,
+      lines: estimate.accepted_snapshot.lines,
+    });
+    const rows = (await db.all(
+      'SELECT data FROM records WHERE owner_id = ? AND entity = ? AND parent_id = ?',
+      [ownerId, 'WorkItem', job.id],
+    )).map((r) => JSON.parse(r.data)).sort((a, b) => (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity));
+    assert.equal(rows[0].template_key, 'prep');
+    assert.equal(rows.at(-1).template_key, 'final_walkthrough');
   } finally {
     await db.close();
   }

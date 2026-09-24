@@ -13,6 +13,17 @@ import { listJobDocuments } from './documentRules.js';
 import { attachDefaultJobTasks } from './defaultJobTasks.js';
 import { estimateLineAmount, changeOrderLineAmount } from './mapping.js';
 import { toCents } from '../shared/money.js';
+import { JOB_TASK_SORT } from '../shared/taskTemplates.js';
+
+/** Scope tasks from signed lines sit between Prep and Final walkthrough. */
+function nextScopeSortOrder(existingTasks = []) {
+  const scopeOrders = existingTasks
+    .filter((t) => t.template_key !== 'prep' && t.template_key !== 'final_walkthrough')
+    .map((t) => t.sort_order)
+    .filter((n) => Number.isFinite(n));
+  if (scopeOrders.length) return Math.max(...scopeOrders) + 1000;
+  return JOB_TASK_SORT.prep + 1000;
+}
 
 // `done` follows `status` (saveRecord), so it is server-owned too: set status 'done' instead.
 const SERVER_OWNED_FIELDS = ['template_key', 'source_type', 'source_id', 'line_id', 'amount_cents', 'billed_invoice_id', 'done', 'done_at'];
@@ -35,9 +46,10 @@ export function lineLaborHours(sourceType, line = {}) {
  */
 export async function createWorkItemsForLines(tx, ownerId, { jobId, sourceType, sourceId, lines }) {
   const lineAmount = sourceType === 'Estimate' ? estimateLineAmount : changeOrderLineAmount;
+  const jobTasks = await listJobDocuments(tx, ownerId, 'WorkItem', jobId);
   // A document reopened and accepted again keeps the tasks already started for its lines.
-  const existing = new Set((await listJobDocuments(tx, ownerId, 'WorkItem', jobId))
-    .filter(item => item.source_id === sourceId).map(item => item.line_id));
+  const existing = new Set(jobTasks.filter(item => item.source_id === sourceId).map(item => item.line_id));
+  let sortOrder = nextScopeSortOrder(jobTasks);
   let created = 0;
   for (const [index, line] of (lines || []).entries()) {
     if (!String(line.description || '').trim()) continue;
@@ -56,7 +68,9 @@ export async function createWorkItemsForLines(tx, ownerId, { jobId, sourceType, 
       tools: line.tools,
       notes: line.notes,
       steps: line.steps || [],
+      sort_order: sortOrder,
     });
+    sortOrder += 1000;
     created += 1;
   }
   return created;
