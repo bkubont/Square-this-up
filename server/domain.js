@@ -72,7 +72,18 @@ const signMeta = {
 };
 
 /** Job task statuses, in board-column order. */
-export const TASK_STATUSES = ['prep', 'in_progress', 'waiting_materials', 'on_hold', 'cancelled', 'done'];
+export const TASK_STATUSES = [
+  'plan',
+  'prep',
+  'permits',
+  'in_progress',
+  'waiting_materials',
+  'waiting_on_approval',
+  'blocked',
+  'on_hold',
+  'cancelled',
+  'done',
+];
 
 /** Job-linked document entities (parent_id = job_id). */
 export const JOB_DOCUMENT_ENTITIES = ['Estimate', 'MaterialOrder', 'ChangeOrder', 'Invoice'];

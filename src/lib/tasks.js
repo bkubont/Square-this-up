@@ -1,10 +1,25 @@
 /** Job task (WorkItem) statuses, in board-column order — mirrors TASK_STATUSES in server/domain.js. */
-export const TASK_STATUSES = ["prep", "in_progress", "waiting_materials", "on_hold", "cancelled", "done"];
+export const TASK_STATUSES = [
+  "plan",
+  "prep",
+  "permits",
+  "in_progress",
+  "waiting_materials",
+  "waiting_on_approval",
+  "blocked",
+  "on_hold",
+  "cancelled",
+  "done",
+];
 
 const LABELS = {
+  plan: "Plan",
   prep: "Prep",
+  permits: "Permits",
   in_progress: "In Progress",
   waiting_materials: "Waiting on Materials",
+  waiting_on_approval: "Waiting on Approval",
+  blocked: "Blocked",
   on_hold: "On Hold",
   cancelled: "Cancelled",
   done: "Completed",
@@ -31,7 +46,13 @@ export const taskSourceVoided = (item, documents = []) =>
 export const taskDeletable = (item, documents = []) => !item?.source_type || taskSourceVoided(item, documents);
 
 /** Statuses that usually need a reason; moving a task into one opens its card note. */
-export const NOTE_PROMPT_STATUSES = ["waiting_materials", "on_hold", "cancelled"];
+export const NOTE_PROMPT_STATUSES = [
+  "waiting_materials",
+  "waiting_on_approval",
+  "blocked",
+  "on_hold",
+  "cancelled",
+];
 
 /** "6 hrs", "1.5 hrs", "1 hr"; empty when unknown. */
 export function formatHours(hours) {

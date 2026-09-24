@@ -1778,6 +1778,26 @@ test('creating a job auto-attaches Prep and Final walkthrough tasks', async t =>
   assert.ok(prep.sort_order < walkthrough.sort_order, 'Prep leads; Final walkthrough closes the list');
 });
 
+test('task cards accept plan, permits, waiting on approval, and blocked statuses', async t => {
+  const { request, register } = await fixture(t);
+  const a = await register('task-statuses@example.com');
+  const create = async (entity, data) => {
+    const result = await request(`/entities/${entity}`, { method: 'POST', data, cookie: a.cookie });
+    assert.equal(result.status, 201, result.data?.message || entity);
+    return result.data;
+  };
+  const patch = (id, data) => request(`/entities/WorkItem/${id}`, { method: 'PATCH', cookie: a.cookie, data });
+  const client = await create('Client', { name: 'Status client', ...CLIENT_ADDR });
+  const job = await create('Job', { title: 'Status job', client_id: client.id });
+  const prep = (await request(`/entities/WorkItem?job_id=${job.id}`, { cookie: a.cookie })).data.find((i) => i.template_key === 'prep');
+  assert.ok(prep);
+  for (const status of ['plan', 'permits', 'waiting_on_approval', 'blocked']) {
+    const updated = await patch(prep.id, { status });
+    assert.equal(updated.status, 200, updated.data?.message);
+    assert.equal(updated.data.status, status);
+  }
+});
+
 test('signing creates a WorkItem per signed line; blank lines skipped; amount snapshotted in cents', async t => {
   const { request, register } = await fixture(t);
   const a = await register('workitem@example.com');
