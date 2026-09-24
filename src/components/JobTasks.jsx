@@ -7,7 +7,7 @@ import StatusSelect from "@/components/StatusSelect";
 import TaskDetailDialog from "@/components/TaskDetailDialog";
 import TaskNotes from "@/components/TaskNotes";
 import { moneyCents } from "@/lib/format";
-import { TASK_STATUSES, NOTE_PROMPT_STATUSES, taskStatus, taskStatusLabel, sortTasks, taskSourceVoided, formatHours, hoursRemaining } from "@/lib/tasks";
+import { TASK_STATUSES, NOTE_PROMPT_STATUSES, taskStatus, taskStatusLabel, sortTasks, sortTasksForList, taskSourceVoided, formatHours, hoursRemaining } from "@/lib/tasks";
 import { statusColors, statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,10 @@ export default function JobTasks({ jobId = undefined, items = [], documents = []
   // Optimistic status/position while a board move saves, so the card doesn't snap back.
   const [pending, setPending] = useState(/** @type {Record<string, { status: string, sort_order: number }>} */ ({}));
 
-  const shown = useMemo(() => sortTasks(items.map((item) => (pending[item.id] ? { ...item, ...pending[item.id] } : item))), [items, pending]);
+  const shown = useMemo(() => {
+    const merged = items.map((item) => (pending[item.id] ? { ...item, ...pending[item.id] } : item));
+    return view === "list" ? sortTasksForList(merged) : sortTasks(merged);
+  }, [items, pending, view]);
   const doneCount = shown.filter((i) => taskStatus(i) === "done").length;
   const openItem = items.find((i) => i.id === openId) || null;
 

@@ -39,6 +39,19 @@ export function sortTasks(items = []) {
     || (a.created_date || "").localeCompare(b.created_date || ""));
 }
 
+/** List view: Prep first, signed scope in the middle, Final walkthrough last — regardless of status. */
+export function sortTasksForList(items = []) {
+  const band = (item) => {
+    if (item?.template_key === "prep") return 0;
+    if (item?.template_key === "final_walkthrough") return 2;
+    return 1;
+  };
+  return [...items].sort((a, b) =>
+    band(a) - band(b)
+    || (a.sort_order ?? 0) - (b.sort_order ?? 0)
+    || (a.created_date || "").localeCompare(b.created_date || ""));
+}
+
 /** Tasks from a voided estimate/change order no longer stand for signed scope and can be removed. */
 export const taskSourceVoided = (item, documents = []) =>
   !!item?.source_id && documents.some((d) => d.id === item.source_id && d.status === "void");
