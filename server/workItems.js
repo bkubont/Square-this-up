@@ -10,11 +10,12 @@
  */
 import { fail, saveRecord, decode, getRecord } from './domain.js';
 import { listJobDocuments } from './documentRules.js';
+import { attachDefaultJobTasks } from './defaultJobTasks.js';
 import { estimateLineAmount, changeOrderLineAmount } from './mapping.js';
 import { toCents } from '../shared/money.js';
 
 // `done` follows `status` (saveRecord), so it is server-owned too: set status 'done' instead.
-const SERVER_OWNED_FIELDS = ['source_type', 'source_id', 'line_id', 'amount_cents', 'billed_invoice_id', 'done', 'done_at'];
+const SERVER_OWNED_FIELDS = ['template_key', 'source_type', 'source_id', 'line_id', 'amount_cents', 'billed_invoice_id', 'done', 'done_at'];
 const EDITABLE_FIELDS = new Set(['description', 'category', 'tools', 'notes', 'steps', 'status', 'sort_order', 'measurements', 'materials', 'labor_hours', 'status_notes']);
 
 /** Expected hours for a signed line: its labor_hours, or labor amount ÷ rate when only those are set. */
@@ -97,6 +98,7 @@ export function prepareWorkItemUpdate(previous, input) {
  * @param {object} item @param {object | null} source the item's source document, if any
  */
 export function assertWorkItemDeletable(item, source) {
+  if (item.template_key) throw fail(409, 'Built-in job tasks cannot be deleted.');
   if (item.source_type && source?.status !== 'void') {
     throw fail(409, 'This task comes from a signed document and cannot be deleted.');
   }
@@ -162,6 +164,7 @@ export async function carryOverChecklists(db) {
       }
 
       for (const job of (await ownerRows(tx, ownerId, 'Job')).map(decode)) {
+        created += await attachDefaultJobTasks(tx, ownerId, job.id);
         if (!Array.isArray(job.checklist) || !job.checklist.length) continue;
         for (const entry of job.checklist.filter(e => String(e?.text || '').trim())) {
           await saveRecord(tx, ownerId, 'WorkItem', { job_id: job.id, description: entry.text.trim(), status: entry.done ? 'done' : 'prep' });
