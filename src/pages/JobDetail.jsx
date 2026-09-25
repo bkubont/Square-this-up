@@ -343,7 +343,7 @@ export default function JobDetail() {
             />
           </div>
 
-          <JobMaterialsPanel jobId={id} materials={job.materials || []} onChanged={load} />
+          <JobMaterialsPanel jobId={id} materials={job.materials || []} tasks={workItems} onChanged={load} />
 
           <JobDocuments
             jobId={id}
@@ -387,7 +387,7 @@ export default function JobDetail() {
                 ))}
               </div>
             </div>
-            <JobTasks jobId={id} items={workItems} documents={documents} onChanged={load} view={taskView} />
+            <JobTasks jobId={id} items={workItems} jobMaterials={job.materials || []} documents={documents} onChanged={load} view={taskView} />
           </div>
         </TabsContent>
 
