@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
+import FilterChips, { SortSelect } from "@/components/FilterChips";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { jobDocumentHref } from "@/lib/documents";
 import { money, shortDate } from "@/lib/format";
+import { sortRows } from "@/lib/listSort";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ export default function Estimates() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sort, setSort] = useState("date");
 
   useEffect(() => {
     Promise.all([
@@ -40,10 +43,14 @@ export default function Estimates() {
 
   const jobById = useMemo(() => Object.fromEntries(jobs.map((j) => [j.id, j])), [jobs]);
   const awaiting = useMemo(() => estimates.filter((e) => e.status === "sent").length, [estimates]);
-  const visible = useMemo(
-    () => (statusFilter === "all" ? estimates : estimates.filter((est) => est.status === statusFilter)),
-    [estimates, statusFilter],
-  );
+  const visible = useMemo(() => {
+    const filtered = statusFilter === "all" ? estimates : estimates.filter((est) => est.status === statusFilter);
+    return sortRows(filtered, sort === "number" ? "name" : sort, {
+      date: (est) => est.date || est.updated_date || est.created_date || "",
+      amount: (est) => Number(est.total) || 0,
+      name: (est) => est.number || "",
+    });
+  }, [estimates, statusFilter, sort]);
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
@@ -61,23 +68,17 @@ export default function Estimates() {
         }
       />
 
-      <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Estimate status">
-        {STATUS_FILTERS.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            aria-pressed={statusFilter === filter.id}
-            onClick={() => setStatusFilter(filter.id)}
-            className={cn(
-              "h-11 px-3 rounded-full border text-sm font-medium",
-              statusFilter === filter.id
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-foreground border-border",
-            )}
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <FilterChips label="Estimate status" options={STATUS_FILTERS} value={statusFilter} onChange={setStatusFilter} />
+        <SortSelect
+          value={sort}
+          onChange={setSort}
+          options={[
+            { id: "date", label: "Date" },
+            { id: "amount", label: "Amount" },
+            { id: "number", label: "Number" },
+          ]}
+        />
       </div>
 
       {loading ? (

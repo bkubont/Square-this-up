@@ -7,6 +7,7 @@ import {
   filterDismissed,
   isDismissed,
   loadDismissals,
+  restoreItem,
   saveDismissals,
 } from "../src/lib/notificationDismissals.js";
 
@@ -76,6 +77,18 @@ describe("notificationDismissals", () => {
     assert.equal(filterDismissed([changed], map).length, 1);
 
     assert.deepEqual(loadDismissals(key), map);
+    saveDismissals(key, {});
+  });
+
+  it("hides temporarily even when the detail changes, and restore brings it back", () => {
+    const key = "test-account-notifications-hide";
+    clearDismissals(key);
+    const item = { id: "pay-j1", detail: "Waiting on payment" };
+    const map = dismissItem(key, item, "hide");
+    const changed = { ...item, detail: "Partial" };
+    assert.equal(isDismissed(changed, map), true);
+    const restored = restoreItem(key, item.id);
+    assert.equal(isDismissed(changed, restored), false);
     saveDismissals(key, {});
   });
 });

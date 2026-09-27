@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
+import FilterChips, { JOB_SORTS, SortSelect } from "@/components/FilterChips";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { money, shortDate } from "@/lib/format";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { depositsByJobId, invoicesByJobId, isArchivedJob, jobBalance, paymentsByJobId } from "@/lib/jobFilters";
+import { sortJobs } from "@/lib/listSort";
 import { statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,8 @@ export default function ArchiveJobs() {
   const [timeline, setTimeline] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("all");
+  const [sort, setSort] = useState("updated");
 
   useEffect(() => {
     Promise.all([
@@ -34,6 +38,10 @@ export default function ArchiveJobs() {
   const paymentsMap = useMemo(() => paymentsByJobId(timeline), [timeline]);
   const depositsMap = useMemo(() => depositsByJobId(timeline), [timeline]);
   const invoiceMap = useMemo(() => invoicesByJobId(invoices), [invoices]);
+  const shown = useMemo(() => {
+    const filtered = status === "all" ? jobs : jobs.filter((job) => job.status === status);
+    return sortJobs(filtered, sort);
+  }, [jobs, status, sort]);
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
@@ -52,9 +60,24 @@ export default function ArchiveJobs() {
         }
       />
 
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <FilterChips
+          label="Archive status"
+          value={status}
+          onChange={setStatus}
+          options={[
+            { id: "all", label: "All" },
+            { id: "Paid", label: "Paid" },
+            { id: "Declined", label: "Declined" },
+            { id: "Cancelled", label: "Cancelled" },
+          ]}
+        />
+        <SortSelect value={sort} onChange={setSort} options={JOB_SORTS} />
+      </div>
+
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>
-      ) : jobs.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <ArchiveIcon className="w-12 h-12 mx-auto mb-3 opacity-40" strokeWidth={1.5} />
           <p>No archived jobs yet.</p>
@@ -62,7 +85,7 @@ export default function ArchiveJobs() {
         </div>
       ) : (
         <div className="space-y-2">
-          {jobs.map((j) => {
+          {shown.map((j) => {
             const balance = jobBalance(j, paymentsMap[j.id] || 0, depositsMap[j.id] || 0, invoiceMap[j.id]);
             return (
               <Link

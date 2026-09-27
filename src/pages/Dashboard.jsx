@@ -23,6 +23,7 @@ import { JOB_PHASE_ORDER, JOB_PHASES } from "@/lib/jobStatus";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { cn } from "@/lib/utils";
 import { statusCardClass } from "@/lib/statusColors";
+import { companyProfileNeedsSetup } from "@/lib/companyProfile";
 
 const ACTIVITY_LABELS = {
   note: "Note",
@@ -65,6 +66,7 @@ function DashboardPage() {
   const [invoices, setInvoices] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [companyProfile, setCompanyProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(() => {
@@ -75,14 +77,16 @@ function DashboardPage() {
       api.entities.Invoice.list("-updated_date", 300),
       api.entities.TimelineEntry.list("-created_date", 1000),
       api.entities.Expense.list("-created_date", 400),
+      api.entities.CompanyProfile.list("-created_date", 1).catch(() => []),
     ])
-      .then(([j, e, c, inv, tl, ex]) => {
+      .then(([j, e, c, inv, tl, ex, profiles]) => {
         setJobs(j.filter(isWorkingJob));
         setEstimates(e);
         setChangeOrders(c);
         setInvoices(inv);
         setTimeline(tl);
         setExpenses(ex);
+        setCompanyProfile(profiles?.[0] || null);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -156,6 +160,18 @@ function DashboardPage() {
           </>
         }
       />
+
+      {!loading && companyProfileNeedsSetup(companyProfile) ? (
+        <Link
+          to="/settings"
+          className="mb-4 block rounded-xl border border-primary/40 bg-card p-4 hover:border-primary"
+        >
+          <div className="font-semibold text-foreground">Set up your company</div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Add your company name so estimates and invoices show who the work is from.
+          </p>
+        </Link>
+      ) : null}
 
       {/* 1. Needs Attention */}
       <Section

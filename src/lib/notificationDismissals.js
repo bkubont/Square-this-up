@@ -53,20 +53,51 @@ export function saveDismissals(accountKey, map) {
 }
 
 /**
+ * Older builds stored a fingerprint string. That means resolved.
+ * @param {unknown} value
+ * @returns {{ mode: "hide" | "resolved", fingerprint: string } | null}
+ */
+export function readDismissal(value) {
+  if (typeof value === "string") return { mode: "resolved", fingerprint: value };
+  if (value && typeof value === "object") {
+    const record = /** @type {{ mode?: string, fingerprint?: unknown }} */ (value);
+    if (record.mode === "hide" || record.mode === "resolved") {
+      return { mode: record.mode, fingerprint: String(record.fingerprint ?? "") };
+    }
+  }
+  return null;
+}
+
+/**
+ * Hide stays out until the user shows it again.
+ * Resolved stays out until the detail fingerprint changes.
  * @param {{ id: string, detail?: string }} item
- * @param {Record<string, string>} dismissed
+ * @param {Record<string, unknown>} dismissed
  */
 export function isDismissed(item, dismissed) {
   if (!item?.id || !dismissed) return false;
-  const fp = dismissed[item.id];
-  if (fp == null) return false;
-  return fp === String(item.detail ?? "");
+  const entry = readDismissal(dismissed[item.id]);
+  if (!entry) return false;
+  if (entry.mode === "hide") return true;
+  return entry.fingerprint === String(item.detail ?? "");
+}
+
+/**
+ * @param {{ id: string, detail?: string }} item
+ * @param {Record<string, unknown>} dismissed
+ * @returns {"hide" | "resolved" | ""}
+ */
+export function dismissalMode(item, dismissed) {
+  const entry = item?.id ? readDismissal(dismissed?.[item.id]) : null;
+  if (!entry) return "";
+  if (entry.mode === "hide") return "hide";
+  return entry.fingerprint === String(item.detail ?? "") ? "resolved" : "";
 }
 
 /**
  * @template {{ id: string, detail?: string }} T
  * @param {T[]} items
- * @param {Record<string, string>} dismissed
+ * @param {Record<string, unknown>} dismissed
  * @returns {T[]}
  */
 export function filterDismissed(items, dismissed) {
@@ -76,10 +107,28 @@ export function filterDismissed(items, dismissed) {
 /**
  * @param {string} accountKey
  * @param {{ id: string, detail?: string }} item
- * @returns {Record<string, string>}
+ * @param {"hide" | "resolved"} [mode]
+ * @returns {Record<string, unknown>}
  */
-export function dismissItem(accountKey, item) {
-  const next = { ...loadDismissals(accountKey), [item.id]: String(item.detail ?? "") };
+export function dismissItem(accountKey, item, mode = "resolved") {
+  const next = {
+    ...loadDismissals(accountKey),
+    [item.id]: {
+      mode: mode === "hide" ? "hide" : "resolved",
+      fingerprint: String(item.detail ?? ""),
+    },
+  };
+  saveDismissals(accountKey, next);
+  return next;
+}
+
+/**
+ * @param {string} accountKey
+ * @param {string} itemId
+ */
+export function restoreItem(accountKey, itemId) {
+  const next = { ...loadDismissals(accountKey) };
+  delete next[itemId];
   saveDismissals(accountKey, next);
   return next;
 }

@@ -5,6 +5,7 @@ import MoneyGroups from "@/components/MoneyGroups";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { money } from "@/lib/format";
+import { loggedSpend } from "@/lib/loggedSpend";
 import {
   countByPhase,
   countByStatus,
@@ -59,9 +60,9 @@ export default function Reports() {
     [jobs]
   );
 
-  const expenseTotal = useMemo(
-    () => expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0),
-    [expenses]
+  const spend = useMemo(
+    () => loggedSpend({ expenses, timeline }),
+    [expenses, timeline]
   );
 
   const empty = !loading && jobs.length === 0 && expenses.length === 0;
@@ -98,8 +99,12 @@ export default function Reports() {
             <div className="mt-3">
               <StatCard
                 label="Logged expenses"
-                value={loading ? "…" : money(expenseTotal)}
-                hint={loading ? undefined : `${expenses.length} record${expenses.length === 1 ? "" : "s"} · separate from invoice totals`}
+                value={loading ? "…" : money(spend.total)}
+                hint={
+                  loading
+                    ? undefined
+                    : `${expenses.length} expense${expenses.length === 1 ? "" : "s"} counted once. Receipt photos already on an expense are not added again. Material order totals stay separate.`
+                }
               />
             </div>
           </section>

@@ -11,9 +11,11 @@ import { isWorkingJob } from "@/lib/jobFilters";
 import { addCalendarDays, todayKey } from "@/lib/format";
 import {
   clearDismissals,
+  dismissalMode,
   dismissItem,
   filterDismissed,
   loadDismissals,
+  restoreItem,
 } from "@/lib/notificationDismissals";
 import { cn } from "@/lib/utils";
 
@@ -85,12 +87,22 @@ export default function NotificationsMenu() {
   );
 
   const visible = useMemo(() => filterDismissed(allItems, dismissed), [allItems, dismissed]);
+  const parked = useMemo(
+    () => allItems.filter((item) => dismissalMode(item, dismissed)),
+    [allItems, dismissed],
+  );
   const unreadCount = loaded ? visible.length : 0;
 
-  const onDismiss = (item, event) => {
+  const onDismiss = (item, mode, event) => {
     event.preventDefault();
     event.stopPropagation();
-    setDismissed(dismissItem(accountKey, item));
+    setDismissed(dismissItem(accountKey, item, mode));
+  };
+
+  const onRestore = (item, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDismissed(restoreItem(accountKey, item.id));
   };
 
   const onClearAll = () => {
@@ -200,20 +212,57 @@ export default function NotificationsMenu() {
                         </span>
                       ) : null}
                     </span>
-                    <button
-                      type="button"
-                      onClick={(e) => onDismiss(item, e)}
-                      className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
-                      aria-label={`Dismiss ${item.title}`}
-                      title="Dismiss"
-                    >
-                      <X className="w-3.5 h-3.5" strokeWidth={2} />
-                    </button>
+                    <span className="flex flex-col shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => onDismiss(item, "hide", e)}
+                        className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                        aria-label={`Hide ${item.title} for now`}
+                        title="Hide for now"
+                      >
+                        <X className="w-3.5 h-3.5" strokeWidth={2} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => onDismiss(item, "resolved", e)}
+                        className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                        aria-label={`Resolve ${item.title}`}
+                        title="Resolved"
+                      >
+                        <Check className="w-3.5 h-3.5" strokeWidth={2} />
+                      </button>
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
+          {parked.length > 0 ? (
+            <details className="border-t border-border">
+              <summary className="px-3 py-2 text-xs font-medium text-foreground cursor-pointer">
+                Hidden and resolved ({parked.length})
+              </summary>
+              <ul className="divide-y divide-border">
+                {parked.map((item) => (
+                  <li key={`parked-${item.id}`} className="flex items-center gap-2 px-3 py-2">
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm text-foreground truncate">{item.title}</span>
+                      <span className="block text-[11px] text-muted-foreground">
+                        {dismissalMode(item, dismissed) === "hide" ? "Hidden for now" : "Resolved"}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => onRestore(item, e)}
+                      className="text-xs font-medium text-primary hover:underline shrink-0 min-h-11"
+                    >
+                      Show again
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border bg-muted/20">

@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Wallet } from "lucide-react";
+import { MoreHorizontal, Plus, Wallet } from "lucide-react";
 import { api } from "@/api/client";
 import PageHeader from "@/components/PageHeader";
 import ExpenseFormDialog from "@/components/ExpenseFormDialog";
+import FilterChips from "@/components/FilterChips";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Image } from "@/components/ui/image";
 import { money, shortDate } from "@/lib/format";
+import { sortRows } from "@/lib/listSort";
 import { NAV_ICONS } from "@/lib/navIcons";
 
 const ExpensesIcon = NAV_ICONS.expenses;
@@ -20,6 +23,8 @@ export default function Expenses() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [scope, setScope] = useState("all");
+  const [sort, setSort] = useState("date");
 
   const load = useCallback(async () => {
     const [e, j] = await Promise.all([
@@ -41,7 +46,13 @@ export default function Expenses() {
     () => expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0),
     [expenses]
   );
-  const unassigned = useMemo(() => expenses.filter((e) => !e.job_id).length, [expenses]);
+  const unassignedRows = useMemo(() => expenses.filter((e) => !e.job_id), [expenses]);
+  const linkedRows = useMemo(() => expenses.filter((e) => e.job_id), [expenses]);
+  const order = (rows) => sortRows(rows, sort, {
+    date: (row) => row.date || row.created_date || "",
+    amount: (row) => Number(row.amount) || 0,
+    name: (row) => row.vendor || row.category || "",
+  });
 
   const openNew = () => {
     setEditing(null);
@@ -66,7 +77,7 @@ export default function Expenses() {
         description={
           loading
             ? "Track spend by category and job"
-            : `${expenses.length} expense${expenses.length === 1 ? "" : "s"} · ${money(total)}${unassigned ? ` · ${unassigned} unassigned` : ""}`
+            : `${expenses.length} expense${expenses.length === 1 ? "" : "s"} · ${money(total)}${unassignedRows.length ? ` · ${unassignedRows.length} unassigned` : ""}`
         }
         primaryAction={
           <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={openNew}>
@@ -79,6 +90,32 @@ export default function Expenses() {
           </Link>
         }
       />
+
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <FilterChips
+          label="Expense scope"
+          value={scope}
+          onChange={setScope}
+          options={[
+            { id: "all", label: "All" },
+            { id: "unassigned", label: "Unassigned" },
+            { id: "job", label: "On a job" },
+          ]}
+        />
+        <label className="text-sm text-foreground inline-flex items-center gap-2">
+          Sort
+          <select
+            aria-label="Sort expenses"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="h-11 rounded-md border border-border bg-card px-2 text-sm"
+          >
+            <option value="date">Newest</option>
+            <option value="amount">Amount</option>
+            <option value="name">Vendor</option>
+          </select>
+        </label>
+      </div>
 
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>
@@ -94,56 +131,42 @@ export default function Expenses() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-2">
-          {expenses.map((expense) => {
-            const job = expense.job_id ? jobById[expense.job_id] : null;
-            return (
-              <div
-                key={expense.id}
-                className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors"
-              >
-                {expense.photo_url ? (
-                  <Image src={expense.photo_url} alt="" className="w-14 h-14 rounded-md object-cover border border-border shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-md border border-dashed border-border flex items-center justify-center shrink-0 text-muted-foreground">
-                    <Wallet className="w-5 h-5 opacity-50" />
-                  </div>
-                )}
-                <button type="button" className="flex-1 min-w-0 text-left" onClick={() => openEdit(expense)}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-foreground truncate">
-                        {expense.category || "Expense"}
-                        {expense.vendor ? <span className="font-normal text-muted-foreground"> · {expense.vendor}</span> : null}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-0.5">
-                        {shortDate(expense.date || expense.created_date)}
-                        {job ? (
-                          <>
-                            {" · "}
-                            <Link
-                              to={`/jobs/${job.id}`}
-                              className="text-primary hover:underline"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {job.title}
-                            </Link>
-                          </>
-                        ) : (
-                          <span className="text-attention"> · Unassigned</span>
-                        )}
-                      </div>
-                      {expense.note ? <div className="text-xs text-muted-foreground mt-1 truncate">{expense.note}</div> : null}
-                    </div>
-                    <div className="text-sm font-semibold tabular-nums text-foreground shrink-0">{money(expense.amount)}</div>
-                  </div>
-                </button>
-                <Button type="button" variant="ghost" size="sm" className="text-muted-foreground shrink-0" onClick={() => remove(expense)}>
-                  Delete
-                </Button>
-              </div>
-            );
-          })}
+        <div className="space-y-6">
+          {scope !== "job" && (
+            <section>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">Unassigned queue</h2>
+              <p className="text-xs text-muted-foreground mb-2">Not on a job yet. Open one to link it and its receipt.</p>
+              {unassignedRows.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">No unassigned expenses.</p>
+              ) : (
+                <div className="space-y-2">
+                  {order(unassignedRows).map((expense) => (
+                    <ExpenseRow key={expense.id} expense={expense} job={null} onEdit={openEdit} onDelete={remove} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+          {scope !== "unassigned" && (
+            <section>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">On a job</h2>
+              {linkedRows.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">No expenses linked to a job.</p>
+              ) : (
+                <div className="space-y-2">
+                  {order(linkedRows).map((expense) => (
+                    <ExpenseRow
+                      key={expense.id}
+                      expense={expense}
+                      job={jobById[expense.job_id] || null}
+                      onEdit={openEdit}
+                      onDelete={remove}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       )}
 
@@ -154,6 +177,58 @@ export default function Expenses() {
         expense={editing}
         onSaved={() => load()}
       />
+    </div>
+  );
+}
+
+function ExpenseRow({ expense, job, onEdit, onDelete }) {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+      {expense.photo_url ? (
+        <Image src={expense.photo_url} alt="" className="w-14 h-14 rounded-md object-cover border border-border shrink-0" />
+      ) : (
+        <div className="w-14 h-14 rounded-md border border-dashed border-border flex items-center justify-center shrink-0 text-muted-foreground">
+          <Wallet className="w-5 h-5 opacity-50" />
+        </div>
+      )}
+      <button type="button" className="flex-1 min-w-0 text-left" onClick={() => onEdit(expense)}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="font-semibold text-foreground truncate">
+              {expense.category || "Expense"}
+              {expense.vendor ? <span className="font-normal text-muted-foreground"> · {expense.vendor}</span> : null}
+            </div>
+            <div className="text-sm text-muted-foreground mt-0.5">
+              {shortDate(expense.date || expense.created_date)}
+              {job ? (
+                <>
+                  {" · "}
+                  <Link to={`/jobs/${job.id}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>
+                    {job.title}
+                  </Link>
+                </>
+              ) : (
+                <span className="text-foreground"> · Unassigned</span>
+              )}
+              {expense.photo_url ? " · Receipt attached" : ""}
+            </div>
+            {expense.note ? <div className="text-xs text-muted-foreground mt-1 truncate">{expense.note}</div> : null}
+          </div>
+          <div className="text-sm font-semibold tabular-nums text-foreground shrink-0">{money(expense.amount)}</div>
+        </div>
+      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="ghost" size="icon" className="h-11 w-11 shrink-0" aria-label={`More actions for ${expense.category || "expense"}`}>
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem className="text-red-600" onClick={() => onDelete(expense)}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
