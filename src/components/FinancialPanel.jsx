@@ -13,7 +13,7 @@ const TONE = {
   bill: "bg-secondary text-foreground",
   deposit: "bg-secondary text-foreground",
   collected: "bg-emerald-50 text-emerald-800",
-  remaining: "bg-attention-muted text-attention",
+  remaining: "bg-attention-muted text-foreground",
 };
 
 function MoneyFigure({ label, value, tone }) {

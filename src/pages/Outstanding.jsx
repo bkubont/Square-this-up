@@ -146,7 +146,7 @@ function DocSection({ title, subtitle, loading, docs, empty, amountFor = undefin
                 </div>
                 <div className="font-semibold text-foreground truncate">{d.number || d.title || d.id}</div>
               </div>
-              <div className="text-sm font-semibold tabular-nums text-attention">
+              <div className="text-sm font-semibold tabular-nums text-foreground">
                 {money(amountFor ? amountFor(d) : d.total ?? d.net_change ?? 0)}
               </div>
             </Link>

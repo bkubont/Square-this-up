@@ -37,16 +37,20 @@ function JobChip({ job, dense = false }) {
     >
       <span className={cn("mt-1.5 w-1.5 h-1.5 rounded-full shrink-0", colors.swatch)} aria-hidden="true" />
       <div className="flex-1 min-w-0">
-        <div className={cn("font-semibold text-foreground truncate", dense ? "text-xs" : "text-sm")}>
+        <div className={cn("font-semibold text-foreground max-[430px]:whitespace-normal max-[430px]:line-clamp-2", dense ? "text-xs truncate max-[430px]:text-sm" : "text-sm truncate")}>
           {job.title || "Untitled job"}
         </div>
         {dense ? (
-          <div className="text-muted-foreground truncate text-[10px]">{job.client_name || "—"}</div>
+          <div className="text-muted-foreground truncate text-[10px] max-[430px]:text-xs">{job.client_name || "—"}</div>
         ) : (
           <JobCustomer job={job} className="text-xs" />
         )}
+        <div className="hidden max-[430px]:flex max-[430px]:flex-wrap max-[430px]:items-center max-[430px]:gap-1 max-[430px]:mt-1">
+          <StatusBadge status={job.status} />
+          <JobRunningTotal job={job} className="text-xs" />
+        </div>
         {!dense ? (
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1.5 flex items-center gap-2 max-[430px]:hidden">
             <StatusBadge status={job.status} />
             <JobRunningTotal job={job} className="text-xs" />
             <span className="text-[11px] font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-0.5">
@@ -350,7 +354,7 @@ function AgendaView({ scheduled }) {
           key={job.id}
           to={`/jobs/${job.id}`}
           className={cn(
-            "group flex items-center gap-3 rounded-xl border p-4 hover:border-primary/40 transition-colors",
+            "group flex max-[430px]:flex-col items-center max-[430px]:items-stretch gap-3 rounded-xl border p-4 hover:border-primary/40 transition-colors",
             statusCardClass(job.status)
           )}
         >
@@ -359,7 +363,7 @@ function AgendaView({ scheduled }) {
             {job.end_date ? <div className="text-[10px] text-muted-foreground">→ {shortDate(job.end_date)}</div> : null}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-foreground truncate">{job.title}</div>
+            <div className="font-semibold text-foreground truncate max-[430px]:whitespace-normal max-[430px]:line-clamp-2">{job.title}</div>
             <div className="text-sm text-muted-foreground flex items-center gap-1 min-w-0">
               <Clock className="w-3 h-3 shrink-0" />
               <JobCustomer job={job} />

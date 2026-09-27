@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Menu, User } from "lucide-react";
+import { LogOut, Menu, Search, User } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { BRAND_ASSETS, PRODUCT_NAME } from "@/lib/brand";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -8,6 +8,7 @@ import HelpPanel from "@/components/HelpPanel";
 import NotificationsMenu from "@/components/NotificationsMenu";
 import QuickAddMenu from "@/components/QuickAddMenu";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
  */
 export default function AppTopBar({ onOpenSidebar, className }) {
   const { user, logout } = useAuth();
+  const [searchOpen, setSearchOpen] = React.useState(false);
 
   return (
     <header
@@ -58,9 +60,29 @@ export default function AppTopBar({ onOpenSidebar, className }) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
-        <div className="sm:hidden w-28">
-          <GlobalSearch />
-        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="sm:hidden h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          aria-label="Search jobs and customers"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="w-5 h-5" strokeWidth={1.75} />
+        </Button>
+        <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+          <SheetContent side="top" className="w-full max-h-[100dvh] h-[100dvh] sm:h-auto p-4 gap-3">
+            <SheetHeader className="text-left">
+              <SheetTitle>Search</SheetTitle>
+            </SheetHeader>
+            <GlobalSearch
+              autoFocus
+              className="max-w-none"
+              inlineResults
+              onNavigate={() => setSearchOpen(false)}
+            />
+          </SheetContent>
+        </Sheet>
 
         <QuickAddMenu />
 

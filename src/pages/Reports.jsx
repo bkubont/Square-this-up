@@ -167,15 +167,8 @@ export default function Reports() {
   );
 }
 
-function StatCard({ label, value, hint = undefined, attention = false, tone = "base" }) {
-  const valueClass =
-    tone === "approval"
-      ? "text-attention-approval"
-      : tone === "payment"
-        ? "text-attention-payment"
-        : attention
-          ? "text-attention"
-          : "text-foreground";
+function StatCard({ label, value, hint = undefined }) {
+  const valueClass = "text-foreground";
   return (
     <div className="bg-card rounded-xl border border-border p-3">
       <div className="text-xs text-muted-foreground">{label}</div>

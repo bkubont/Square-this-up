@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * Client-side global search over jobs and customers (no dedicated search API yet).
  */
-export default function GlobalSearch({ className, onNavigate }) {
+export default function GlobalSearch({ className, onNavigate, autoFocus = false, inlineResults = false }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [jobs, setJobs] = useState([]);
@@ -37,16 +37,21 @@ export default function GlobalSearch({ className, onNavigate }) {
   }, []);
 
   const q = query.trim().toLowerCase();
+  const clientNameFor = (job) =>
+    clients.find((c) => c.id === job.client_id)?.name || job.client_name || "";
   const jobHits =
     q.length < 1
       ? []
       : jobs
-          .filter(
-            (j) =>
+          .filter((j) => {
+            const customer = clientNameFor(j).toLowerCase();
+            return (
               (j.title || "").toLowerCase().includes(q) ||
               (j.job_number || "").toLowerCase().includes(q) ||
-              (j.status || "").toLowerCase().includes(q)
-          )
+              (j.status || "").toLowerCase().includes(q) ||
+              customer.includes(q)
+            );
+          })
           .slice(0, 6);
   const clientHits =
     q.length < 1
@@ -80,8 +85,9 @@ export default function GlobalSearch({ className, onNavigate }) {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search jobs & customers…"
-          className="w-full h-8 rounded-md border border-sidebar-border bg-sidebar-accent/60 pl-8 pr-8 text-sm text-sidebar-foreground placeholder:text-sidebar-muted focus:outline-none focus:ring-1 focus:ring-sidebar-ring"
+          className="w-full h-11 sm:h-8 rounded-md border border-sidebar-border bg-sidebar-accent/60 pl-8 pr-8 text-sm text-sidebar-foreground placeholder:text-sidebar-muted focus:outline-none focus:ring-1 focus:ring-sidebar-ring"
           aria-label="Search jobs and customers"
+          autoFocus={autoFocus}
         />
         {query ? (
           <button
@@ -95,7 +101,10 @@ export default function GlobalSearch({ className, onNavigate }) {
         ) : null}
       </div>
       {open && q.length >= 1 && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover text-popover-foreground shadow-md overflow-hidden">
+        <div className={cn(
+          "z-50 mt-1 w-full rounded-md border border-border bg-popover text-popover-foreground shadow-md overflow-hidden",
+          inlineResults ? "relative" : "absolute"
+        )}>
           {!loaded ? (
             <p className="px-3 py-2 text-sm text-muted-foreground">Loading…</p>
           ) : !hasResults ? (
@@ -110,10 +119,11 @@ export default function GlobalSearch({ className, onNavigate }) {
                       key={j.id}
                       to={`/jobs/${j.id}`}
                       onClick={go}
-                      className="block px-3 py-2 text-sm hover:bg-accent truncate"
+                      className="block px-3 py-3 text-sm hover:bg-accent min-h-11"
                     >
-                      <span className="font-medium">{j.title || "Untitled"}</span>
-                      {j.status ? <span className="text-muted-foreground ml-2">{j.status}</span> : null}
+                      <div className="font-medium whitespace-normal leading-snug">{j.title || "Untitled"}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{clientNameFor(j) || "No customer"}</div>
+                      {j.status ? <div className="text-xs text-foreground mt-0.5">{j.status}</div> : null}
                     </Link>
                   ))}
                 </div>
@@ -126,9 +136,12 @@ export default function GlobalSearch({ className, onNavigate }) {
                       key={c.id}
                       to={`/clients/${c.id}`}
                       onClick={go}
-                      className="block px-3 py-2 text-sm hover:bg-accent truncate"
+                      className="block px-3 py-3 text-sm hover:bg-accent min-h-11"
                     >
-                      {c.name}
+                      <div className="font-medium whitespace-normal leading-snug">{c.name}</div>
+                      {c.phone || c.email ? (
+                        <div className="text-xs text-muted-foreground mt-0.5">{c.phone || c.email}</div>
+                      ) : null}
                     </Link>
                   ))}
                 </div>
