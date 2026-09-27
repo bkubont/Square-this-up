@@ -52,22 +52,28 @@ export default function JobHeaderStatuses({
   className = "",
 }) {
   const tracks = headerTracks(job, client);
+  const phase = job?.phase || "";
+  const trackLabel = (track, fallback) => {
+    if (phase === track) return `${fallback} · current`;
+    if (track === "lead" && phase && phase !== "lead") return "Lead · earlier";
+    return fallback;
+  };
   return (
-    <div className={cn("space-y-2 w-full sm:w-72", className)}>
+    <div className={cn("grid grid-cols-2 gap-2 w-full", className)}>
       <TrackSelect
-        label="Lead"
+        label={trackLabel("lead", "Lead")}
         value={tracks.lead}
         statuses={JOB_PHASES.lead.statuses}
         onChange={(status) => onChange?.({ track: "lead", status })}
       />
       <TrackSelect
-        label="Working"
+        label={trackLabel("working", "Working")}
         value={tracks.working}
         statuses={JOB_PHASES.working.statuses}
         onChange={(status) => onChange?.({ track: "working", status })}
       />
       <div>
-        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Materials</div>
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Materials · from the list</div>
         <div className="min-h-9 flex items-center rounded-md border border-border bg-muted/40 px-3 py-2">
           <MaterialsStatusLine
             job={job}
@@ -78,7 +84,7 @@ export default function JobHeaderStatuses({
         </div>
       </div>
       <TrackSelect
-        label="Payment"
+        label={trackLabel("payment", "Payment")}
         value={tracks.payment}
         statuses={JOB_PHASES.payment.statuses}
         onChange={(status) => onChange?.({ track: "payment", status })}

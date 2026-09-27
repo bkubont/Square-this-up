@@ -4,6 +4,7 @@ import { api } from "@/api/client";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import MoneyGroups from "@/components/MoneyGroups";
+import { jobDocumentHref } from "@/lib/documents";
 import { money } from "@/lib/format";
 import {
   invoiceBalanceDue,
@@ -131,25 +132,34 @@ function DocSection({ title, subtitle, loading, docs, empty, amountFor = undefin
       ) : (
         <div className="space-y-2">
           {docs.map((d) => (
-            <Link
+            <div
               key={`${d.entity}-${d.id}`}
-              to={`/jobs/${d.job_id}`}
               className={cn(
-                "flex items-center gap-3 bg-card rounded-xl border p-4 hover:shadow-sm transition-colors",
+                "flex items-center gap-3 bg-card rounded-xl border p-4",
                 statusCardClass(d.status, { entity: d.entity })
               )}
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d.kind}</span>
-                  <StatusBadge status={d.status} entity={d.entity} />
+              <Link
+                to={jobDocumentHref(d.job_id, d.entity, d.id)}
+                className="flex flex-1 min-w-0 items-center gap-3 hover:text-primary"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d.kind}</span>
+                    <StatusBadge status={d.status} entity={d.entity} />
+                  </div>
+                  <div className="font-semibold text-foreground truncate">{d.number || d.title || d.id}</div>
                 </div>
-                <div className="font-semibold text-foreground truncate">{d.number || d.title || d.id}</div>
-              </div>
-              <div className="text-sm font-semibold tabular-nums text-foreground">
-                {money(amountFor ? amountFor(d) : d.total ?? d.net_change ?? 0)}
-              </div>
-            </Link>
+                <div className="text-sm font-semibold tabular-nums text-foreground">
+                  {money(amountFor ? amountFor(d) : d.total ?? d.net_change ?? 0)}
+                </div>
+              </Link>
+              {d.job_id ? (
+                <Link to={`/jobs/${d.job_id}`} className="text-xs font-medium text-primary hover:underline shrink-0 min-h-11 inline-flex items-center">
+                  Open job
+                </Link>
+              ) : null}
+            </div>
           ))}
         </div>
       )}
@@ -169,28 +179,34 @@ function RecordSection({ title, subtitle, loading, records, empty, showInvoiceFi
       ) : (
         <div className="space-y-2">
           {records.map((record) => (
-            <Link
+            <div
               key={record.id}
-              to={record.to}
-              className="flex items-center gap-3 bg-card rounded-xl border border-border p-4 hover:shadow-sm transition-colors"
+              className="flex items-center gap-3 bg-card rounded-xl border border-border p-4"
             >
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground truncate">{record.title}</div>
-                <div className="text-xs text-muted-foreground mt-0.5 truncate">{record.detail}</div>
-              </div>
-              <div className="text-right shrink-0 text-sm tabular-nums">
-                {showInvoiceFigures ? (
-                  <>
-                    <div className="text-foreground font-semibold">{money(record.remaining)} remaining</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {money(record.billed)} billed · {money(record.applied)} applied
-                    </div>
-                  </>
-                ) : (
-                  <div className="font-semibold text-foreground">{money(record.amount)}</div>
-                )}
-              </div>
-            </Link>
+              <Link to={record.to} className="flex flex-1 min-w-0 items-center gap-3 hover:text-primary">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground truncate">{record.title}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5 truncate">{record.detail}</div>
+                </div>
+                <div className="text-right shrink-0 text-sm tabular-nums">
+                  {showInvoiceFigures ? (
+                    <>
+                      <div className="text-foreground font-semibold">{money(record.remaining)} remaining</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {money(record.billed)} billed · {money(record.applied)} applied
+                      </div>
+                    </>
+                  ) : (
+                    <div className="font-semibold text-foreground">{money(record.amount)}</div>
+                  )}
+                </div>
+              </Link>
+              {record.jobId ? (
+                <Link to={`/jobs/${record.jobId}`} className="text-xs font-medium text-primary hover:underline shrink-0 min-h-11 inline-flex items-center">
+                  Open job
+                </Link>
+              ) : null}
+            </div>
           ))}
         </div>
       )}

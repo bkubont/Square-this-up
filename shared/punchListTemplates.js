@@ -9,9 +9,9 @@ export const PUNCH_LIST_SECTION_KEYS = ['finish', 'find', 'funds'];
 
 /** @type {Array<{ key: PunchListSectionKey, label: string, hint: string }>} */
 export const PUNCH_LIST_SECTIONS = [
-  { key: 'finish', label: 'Finish', hint: 'Finish work (trim, paint)' },
-  { key: 'find', label: 'Find', hint: 'Walk through / double check' },
-  { key: 'funds', label: 'Funds', hint: 'Bill / get paid' },
+  { key: 'finish', label: 'Finish work', hint: 'Finish work (trim, paint)' },
+  { key: 'find', label: 'Check quality', hint: 'Walk through and double-check' },
+  { key: 'funds', label: 'Confirm billing', hint: 'Bill and get paid' },
 ];
 
 /** Default empty sections for a new punch list document. */

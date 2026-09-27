@@ -6,6 +6,7 @@ import {
   STORED_JOB_STATUSES,
   phaseForStatus,
 } from "./jobStatus.js";
+import { jobDocumentHref } from "./documents.js";
 
 /** Stored job statuses across Lead, Working, and Payment (Invoiced is a Payment status). */
 export const JOB_STATUSES = STORED_JOB_STATUSES;
@@ -278,7 +279,10 @@ export function moneyGroups({ jobs = [], estimates = [], invoices = [], timeline
       billed: invoiceBilled,
       applied: invoiceApplied,
       remaining: invoiceRemaining,
-      to: invoice.job_id ? `/jobs/${invoice.job_id}` : "/jobs/outstanding?group=issued",
+      jobId: invoice.job_id || "",
+      to: invoice.job_id
+        ? jobDocumentHref(invoice.job_id, "Invoice", invoice.id)
+        : "/jobs/outstanding?group=issued",
     });
   }
 

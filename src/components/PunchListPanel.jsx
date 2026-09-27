@@ -140,7 +140,7 @@ export default function PunchListPanel({ jobId, punchList, onChanged, className 
               <StatusBadge status={punchList.status} entity="PunchList" />
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Punch list · finish | find | funds
+              Finish work · Check quality · Confirm billing
               {saving ? " · saving…" : ""}
             </p>
           </div>
@@ -232,11 +232,13 @@ export default function PunchListPanel({ jobId, punchList, onChanged, className 
 
 function SectionBlock({ section, hint, readOnly, onToggle, onText, onRemove, onAdd }) {
   const [draft, setDraft] = useState("");
+  const known = PUNCH_LIST_SECTIONS.find((item) => item.key === section.key);
+  const label = known?.label || section.label || section.key;
 
   return (
     <div className="rounded-lg border border-border bg-muted/20 p-3">
       <div className="flex items-baseline justify-between gap-2 mb-2">
-        <div className="text-sm font-semibold text-foreground capitalize">{section.label || section.key}</div>
+        <div className="text-sm font-semibold text-foreground">{label}</div>
         <div className="text-[11px] text-muted-foreground">{hint}</div>
       </div>
       <ul className="space-y-1.5">
@@ -286,7 +288,7 @@ function SectionBlock({ section, hint, readOnly, onToggle, onText, onRemove, onA
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={`Add ${section.label?.toLowerCase() || section.key} item…`}
+            placeholder={`Add ${label.toLowerCase()} item…`}
             className="h-8 text-sm flex-1"
           />
           <Button type="submit" variant="outline" size="sm" className="h-8 shrink-0" disabled={!draft.trim()}>

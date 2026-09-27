@@ -44,7 +44,7 @@ export default function ClientFormDialog({ open, onOpenChange, onSave, client })
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{client ? "Edit Client" : "New Client"}</DialogTitle>
+          <DialogTitle>{client ? "Edit customer" : "New customer"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>

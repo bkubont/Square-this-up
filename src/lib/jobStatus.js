@@ -149,3 +149,24 @@ export function contactLeadStatus(client, jobs = []) {
   }
   return defaultStatusForPhase('lead');
 }
+
+/**
+ * One next step for the job header, from the current status and documents.
+ * @param {object} job
+ * @param {Array<{entity?: string, status?: string}>} [documents]
+ */
+export function nextJobAction(job, documents = []) {
+  const status = job?.status || "";
+  const phase = job?.phase || phaseForStatus(status) || "lead";
+  const estimate = documents.find((doc) => doc?.entity === "Estimate" && doc.status !== "void");
+  const invoice = documents.find((doc) => doc?.entity === "Invoice" && doc.status !== "void");
+  if (status === "Blocked") return "Clear what is blocking the work";
+  if (status === "Waiting on materials") return "Check materials on Overview";
+  if (status === "Waiting on approval" || estimate?.status === "sent") return "Follow up so the customer can accept the estimate";
+  if (!estimate && (phase === "lead" || status === "Plan / draft estimate")) return "Create the estimate";
+  if (status === "Completed" && !invoice) return "Create the invoice";
+  if (phase === "payment" && status !== "Paid") return "Record a payment";
+  if (phase === "working") return "Finish the work";
+  if (estimate?.status === "draft") return "Send the estimate";
+  return "Update the current status";
+}

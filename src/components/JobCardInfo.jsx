@@ -266,7 +266,7 @@ export function JobQuickAdd({ job, onSaved = undefined, className = undefined })
           <DropdownMenuItem onSelect={() => open("note")}><StickyNote className="w-4 h-4" /> Note</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setExpenseOpen(true)}><Wallet className="w-4 h-4" /> Expense</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setReceiptOpen(true)}><Receipt className="w-4 h-4" /> Receipt</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => open("payment")}><DollarSign className="w-4 h-4" /> Payment</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => open("payment")}><DollarSign className="w-4 h-4" /> Record payment</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

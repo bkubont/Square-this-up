@@ -9,6 +9,7 @@ import {
   moneySummary,
   paymentsByJobId,
 } from "../src/lib/jobFilters.js";
+import { nextJobAction } from "../src/lib/jobStatus.js";
 
 describe("payment-aware money helpers", () => {
   it("aggregates payment_received timeline entries by job", () => {
@@ -142,7 +143,8 @@ describe("labeled money groups", () => {
     assert.equal(groups.issued.applied, 300);
     assert.equal(groups.issued.remaining, 700);
     assert.equal(groups.issued.records.length, 1);
-    assert.equal(groups.issued.records[0].to, "/jobs/billed");
+    assert.equal(groups.issued.records[0].jobId, "billed");
+    assert.equal(groups.issued.records[0].to, "/jobs/billed?tab=overview&doc=Invoice&docId=i1");
 
     assert.equal(groups.deposits.total, 300);
     assert.deepEqual(groups.deposits.records.map((r) => r.id), ["deposit-deposit-only"]);
@@ -172,5 +174,13 @@ describe("labeled money groups", () => {
     assert.equal(groups.issued.remaining, 500);
     assert.equal(groups.deposits.total, 80);
     assert.equal(groups.unbilled.total, 0);
+  });
+});
+
+describe("next job action", () => {
+  it("follows the current phase instead of an earlier lead status", () => {
+    assert.equal(nextJobAction({ phase: "working", status: "In progress", lead_status: "Contact" }, []), "Finish the work");
+    assert.equal(nextJobAction({ phase: "payment", status: "Waiting on payment" }, []), "Record a payment");
+    assert.equal(nextJobAction({ phase: "lead", status: "Contact" }, []), "Create the estimate");
   });
 });
