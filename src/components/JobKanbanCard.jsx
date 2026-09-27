@@ -1,10 +1,11 @@
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Camera, DollarSign, Loader2, MessageSquare, Phone, StickyNote } from "lucide-react";
+import { Camera, DollarSign, Loader2, MessageSquare, MoreHorizontal, Phone, StickyNote } from "lucide-react";
 import { api } from "@/api/client";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PAYMENT_METHODS } from "@/lib/paymentMethods";
@@ -122,11 +123,48 @@ export default function JobKanbanCard({
         />
 
         <div className="flex-1 min-w-0 p-2.5">
+          <div className="min-[431px]:hidden mb-1">
+            <div className="font-semibold text-base text-foreground leading-snug line-clamp-2">
+              {job.title?.trim() || customerName}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              {job.title?.trim() ? <span className="text-muted-foreground">{customerName}</span> : null}
+              <StatusBadge status={job.status} />
+              <span className="font-semibold tabular-nums text-foreground">
+                {rollup.hasEstimate ? money(rollup.total) : balance > 0 ? money(balance) : ""}
+              </span>
+            </div>
+          </div>
           <div className="flex items-start justify-between gap-2">
-            <div className="font-semibold text-sm text-foreground leading-snug truncate min-w-0">
+            <div className="font-semibold text-sm text-foreground leading-snug truncate min-w-0 max-[430px]:hidden">
               {customerName}
             </div>
-            <div className="flex items-center gap-0.5 shrink-0">
+            <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="min-[431px]:hidden inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                    aria-label="More job actions"
+                    onPointerDown={stopCardAction}
+                    onClick={stopCardAction}
+                  >
+                    <MoreHorizontal className="w-5 h-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="min-h-11"
+                    onSelect={() => cameraRef.current?.click()}
+                  >
+                    <Camera className="w-4 h-4" /> Take photo
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="min-h-11" onSelect={() => setPayOpen(true)}>
+                    <DollarSign className="w-4 h-4" /> Record payment
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="max-[430px]:hidden flex items-center gap-0.5">
               <button
                 type="button"
                 title="Take photo"
@@ -153,6 +191,7 @@ export default function JobKanbanCard({
               >
                 <DollarSign className="w-3.5 h-3.5" />
               </button>
+              </div>
             </div>
           </div>
 
@@ -163,7 +202,7 @@ export default function JobKanbanCard({
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:underline truncate max-w-full"
+                  className="text-primary hover:underline truncate max-w-full inline-flex items-center min-h-11 max-[430px]:min-h-11 min-[431px]:min-h-0"
                   onPointerDown={stopCardAction}
                   onClick={stopCardAction}
                 >
@@ -175,7 +214,7 @@ export default function JobKanbanCard({
                 <span className="inline-flex items-center gap-1">
                   <a
                     href={`tel:${phoneDigits}`}
-                    className="inline-flex items-center gap-0.5 text-primary hover:underline"
+                    className="inline-flex items-center gap-0.5 text-primary hover:underline min-h-11 min-[431px]:min-h-0"
                     onPointerDown={stopCardAction}
                     onClick={stopCardAction}
                   >
@@ -198,7 +237,7 @@ export default function JobKanbanCard({
 
           <Link to={href} className="block mt-1.5 rounded-md -mx-1 px-1 py-0.5 hover:bg-muted/50">
             {job.title?.trim() && (
-              <div className="text-xs font-medium text-foreground leading-snug line-clamp-2 mb-1">
+              <div className="text-xs font-medium text-foreground leading-snug line-clamp-2 mb-1 max-[430px]:hidden">
                 {job.title}
               </div>
             )}
@@ -236,7 +275,7 @@ export default function JobKanbanCard({
             <div className="flex items-center justify-between gap-2">
               {showStatus ? <StatusBadge status={job.status} className="scale-90 origin-left" /> : <span />}
               {balance > 0 && (
-                <span className="text-[10px] font-semibold text-attention tabular-nums">{money(balance)}</span>
+                <span className="text-[10px] font-semibold text-foreground tabular-nums">{money(balance)}</span>
               )}
             </div>
           </Link>

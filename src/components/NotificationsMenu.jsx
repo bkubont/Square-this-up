@@ -189,7 +189,7 @@ export default function NotificationsMenu() {
                       <span
                         className={cn(
                           "block text-xs mt-0.5 truncate",
-                          item.tone === "payment" ? "text-attention-payment" : "text-attention"
+                          "text-foreground"
                         )}
                       >
                         {item.detail}

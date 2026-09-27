@@ -111,18 +111,22 @@ export default function AllJobs() {
                 )}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-foreground truncate">{j.title}</div>
-                  <JobCustomer job={j} client={clientsById[j.client_id]} />
+                  <div className="font-semibold text-foreground truncate max-[430px]:whitespace-normal max-[430px]:line-clamp-2">{j.title}</div>
+                  <div className="max-[430px]:mt-1 max-[430px]:flex max-[430px]:flex-wrap max-[430px]:items-center max-[430px]:gap-x-2">
+                    <JobCustomer job={j} client={clientsById[j.client_id]} />
+                    <span className="hidden max-[430px]:inline-flex"><StatusBadge status={j.status} /></span>
+                    <JobRunningTotal summary={summaries[j.id]} className="hidden max-[430px]:inline text-xs" />
+                  </div>
                   {j.archived_at && (
                     <div className="text-xs text-muted-foreground mt-0.5">Archived {shortDate(j.archived_at)}</div>
                   )}
                 </div>
-                <div className="text-right shrink-0">
+                <div className="text-right shrink-0 max-[430px]:hidden">
                   <JobRunningTotal summary={summaries[j.id]} />
-                  {balance > 0 && <div className="text-xs font-semibold text-attention">{money(balance)} due</div>}
+                  {balance > 0 && <div className="text-xs font-semibold text-foreground">{money(balance)} due</div>}
                   {j.start_date && <div className="text-xs text-muted-foreground hidden sm:block">{shortDate(j.start_date)}</div>}
                 </div>
-                <StatusBadge status={j.status} />
+                <span className="max-[430px]:hidden"><StatusBadge status={j.status} /></span>
                 <JobQuickAdd job={j} onSaved={() => { load(); reload(); }} />
               </Link>
             );

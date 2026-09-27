@@ -251,7 +251,7 @@ export function JobQuickAdd({ job, onSaved = undefined, className = undefined })
             type="button"
             variant="outline"
             size="icon"
-            className="h-8 w-8 shrink-0"
+            className="h-11 w-11 min-[431px]:h-8 min-[431px]:w-8 shrink-0"
             aria-label={`Quick add to ${job.title}`}
             title="Quick add"
             onClick={(e) => e.preventDefault()}

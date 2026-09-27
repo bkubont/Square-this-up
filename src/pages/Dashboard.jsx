@@ -328,7 +328,7 @@ function AttentionRow({ row }) {
         <div
           className={cn(
             "text-xs font-medium mt-0.5 truncate",
-            row.tone === "payment" ? "text-attention-payment" : "text-attention"
+            "text-foreground"
           )}
         >
           {row.detail}
@@ -377,7 +377,7 @@ function SummaryLink({ to, label, value, hint = null, attention = false, tone = 
       <div
         className={cn(
           "text-lg font-bold tabular-nums mt-1",
-          attention ? (tone === "approval" ? "text-attention-approval" : "text-attention") : "text-foreground"
+          "text-foreground"
         )}
       >
         {value}
@@ -409,17 +409,24 @@ function JobRow({ job, paymentsLogged = 0, depositsLogged = 0, invoice = null, o
         statusCardClass(job.status)
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="font-semibold text-foreground truncate">{job.title}</div>
-          <JobCustomer job={job} />
+      <div className="flex max-[430px]:flex-col items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 w-full">
+          <div className="font-semibold text-foreground truncate max-[430px]:whitespace-normal max-[430px]:line-clamp-2">{job.title}</div>
+          <div className="max-[430px]:mt-1 max-[430px]:flex max-[430px]:flex-wrap max-[430px]:items-center max-[430px]:gap-x-2 max-[430px]:gap-y-1">
+            <JobCustomer job={job} />
+            <span className="hidden max-[430px]:inline-flex"><StatusBadge status={job.status} /></span>
+            <JobRunningTotal job={job} className="hidden max-[430px]:inline" />
+            {balance > 0 && <span className="hidden max-[430px]:inline text-xs font-semibold text-foreground">{money(balance)} due</span>}
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <StatusBadge status={job.status} />
-          <JobRunningTotal job={job} />
-          {balance > 0 && <span className="text-xs font-semibold text-attention">{money(balance)} due</span>}
+        <div className="flex items-start gap-2 max-[430px]:w-full max-[430px]:justify-end">
+          <div className="flex flex-col items-end gap-1 max-[430px]:hidden">
+            <StatusBadge status={job.status} />
+            <JobRunningTotal job={job} />
+            {balance > 0 && <span className="text-xs font-semibold text-foreground">{money(balance)} due</span>}
+          </div>
+          <JobQuickAdd job={job} onSaved={onQuickAdded} />
         </div>
-        <JobQuickAdd job={job} onSaved={onQuickAdded} />
       </div>
       {(job.start_date || job.end_date) && (
         <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">

@@ -15,8 +15,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* #0504AA */
-    --brand: 240 95% 34%;
+    /* One primary blue: #0504AA */
+    --brand: 240 95.4% 34.1%;
     --brand-foreground: 0 0% 100%;
     --brand-muted: 240 55% 94%;
     --brand-muted-foreground: 240 80% 28%;
@@ -55,7 +55,7 @@
     --status-neutral: 220 12% 42%;
     --status-danger: 0 72% 51%;
 
-    --primary: 240 95% 34%;
+    --primary: 240 95.4% 34.1%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 25% 93%;
     --secondary-foreground: 0 0% 0%;
@@ -67,7 +67,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 220 20% 88%;
     --input: 220 20% 88%;
-    --ring: 240 95% 34%;
+    --ring: 240 95.4% 34.1%;
 
     --surface: 0 0% 100%;
     --surface-muted: 220 28% 95%;
@@ -88,12 +88,12 @@
     /* Near-black sidebar (brand black) */
     --sidebar-background: 0 0% 4%;
     --sidebar-foreground: 220 20% 90%;
-    --sidebar-primary: 240 95% 40%;
+    --sidebar-primary: 240 95.4% 34.1%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 240 95% 40%;
+    --sidebar-ring: 240 95.4% 34.1%;
     --sidebar-muted: 220 10% 55%;
   }
 
@@ -105,7 +105,7 @@
     --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --brand: 240 95% 42%;
+    --brand: 240 95.4% 34.1%;
     --brand-foreground: 0 0% 100%;
     --brand-muted: 240 40% 16%;
     --brand-muted-foreground: 240 55% 82%;
@@ -130,7 +130,7 @@
     --attention-payment-foreground: 42 65% 72%;
     --attention-payment-border: 42 40% 34%;
 
-    --primary: 240 95% 42%;
+    --primary: 240 95.4% 34.1%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 96%;
@@ -142,7 +142,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 240 95% 42%;
+    --ring: 240 95.4% 34.1%;
 
     --surface: 0 0% 8%;
     --surface-muted: 0 0% 12%;
@@ -150,12 +150,12 @@
 
     --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 220 20% 90%;
-    --sidebar-primary: 240 95% 42%;
+    --sidebar-primary: 240 95.4% 34.1%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 240 95% 42%;
+    --sidebar-ring: 240 95.4% 34.1%;
     --sidebar-muted: 220 12% 50%;
   }
 }
@@ -172,7 +172,7 @@
 
 @layer utilities {
   .text-attention {
-    color: hsl(var(--attention));
+    color: hsl(var(--attention-foreground));
   }
   .bg-attention {
     background-color: hsl(var(--attention));
