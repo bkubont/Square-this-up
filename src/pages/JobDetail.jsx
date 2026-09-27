@@ -7,19 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JobHeaderStatuses from "@/components/JobHeaderStatuses";
-import { JOB_PHASES, headerTracks } from "@/lib/jobStatus";
+import { JOB_PHASES, formatJobStatus, headerTracks, nextJobAction } from "@/lib/jobStatus";
 import JobPhotoButton from "@/components/JobPhotoButton";
 import JobPhotosPanel from "@/components/JobPhotosPanel";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import JobTasks from "@/components/JobTasks";
 import PunchListPanel from "@/components/PunchListPanel";
-import { JobRunningTotal, JobQuickNote } from "@/components/JobCardInfo";
+import { JobQuickNote } from "@/components/JobCardInfo";
 import FinancialPanel from "@/components/FinancialPanel";
 import JobFormDialog from "@/components/JobFormDialog";
 import JobDocuments from "@/components/JobDocuments";
 import JobMaterialsPanel from "@/components/JobMaterialsPanel";
 import TimelineFeed from "@/components/TimelineFeed";
-import { todayKey } from "@/lib/format";
+import { money, todayKey } from "@/lib/format";
+import { moneyBlockForPhase, overviewFigures } from "../../shared/overviewMoney.js";
 import { composeJobActivity } from "@/lib/jobActivity";
 import { statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
@@ -64,7 +65,6 @@ export default function JobDetail() {
   const [workItems, setWorkItems] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [punchList, setPunchList] = useState(null);
-  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState("");
   const [editJob, setEditJob] = useState(false);
@@ -92,11 +92,10 @@ export default function JobDetail() {
   };
 
   const load = useCallback(async () => {
-    const [j, e, items, money, jobExpenses, ...docLists] = await Promise.all([
+    const [j, e, items, jobExpenses, ...docLists] = await Promise.all([
       api.entities.Job.get(id),
       api.entities.TimelineEntry.filter({ job_id: id }, "-created_date", 500),
       api.entities.WorkItem.filter({ job_id: id }, "-created_date", 500),
-      api.summaries.job(id).catch(() => null),
       api.entities.Expense.filter({ job_id: id }, "-created_date", 200),
       ...DOC_ENTITIES.map((entity) => api.entities[entity].filter({ job_id: id }, "-created_date", 100)),
     ]);
@@ -104,7 +103,6 @@ export default function JobDetail() {
     setEntries(e);
     setWorkItems(items);
     setExpenses(jobExpenses);
-    setSummary(money);
     const flatDocs = docLists.flatMap((list, i) => list.map((doc) => ({ ...doc, entity: DOC_ENTITIES[i] })));
     setDocuments(flatDocs);
     setPunchList(flatDocs.find((d) => d.entity === "PunchList" && d.status !== "void") || null);
@@ -131,6 +129,13 @@ export default function JobDetail() {
     () => documents.filter((doc) => doc.entity === "MaterialOrder"),
     [documents],
   );
+
+  const balanceLine = useMemo(() => {
+    if (!job) return null;
+    const figures = overviewFigures({ job, documents, timeline: entries });
+    const block = moneyBlockForPhase(job.phase, figures);
+    return block.slots.find((slot) => slot.key === "remaining") || block.slots[block.slots.length - 1] || null;
+  }, [job, documents, entries]);
 
   const addNote = async () => {
     if (!note.trim()) return;
@@ -269,21 +274,15 @@ export default function JobDetail() {
       </div>
 
       <div className={cn("bg-card rounded-xl border p-5 mb-4", statusCardClass(job.status))}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-foreground">
-                {job.title?.trim() || client?.name || "Job"}
-              </h1>
-              {job.title?.trim() && client?.name && (
-                <span className="text-sm font-normal text-muted-foreground">{client.name}</span>
-              )}
-              <JobPhotoButton jobId={id} entries={entries} onUploaded={load} onChanged={load} />
-            </div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {job.title?.trim() || client?.name || "Job"}
+            </h1>
             {client && (
               <div className="mt-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                  <Link to={`/clients/${client.id}`} className="text-muted-foreground hover:text-primary">
+                  <Link to={`/clients/${client.id}`} className="font-medium text-foreground hover:text-primary">
                     {client.name}
                   </Link>
                   {client.phone && (
@@ -297,24 +296,38 @@ export default function JobDetail() {
               </div>
             )}
           </div>
-          <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-            <div className="flex items-start gap-2 w-full sm:w-auto">
-              <JobHeaderStatuses
-                job={job}
-                client={client}
-                workItems={workItems}
-                materialOrders={materialOrders}
-                onChange={changeTrack}
-              />
-              <JobQuickNote job={job} onSaved={load} />
-            </div>
-            {summary && summary.running_total_basis !== "none" && (
-              <div className="text-right">
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Job total</div>
-                <JobRunningTotal summary={summary} className="text-lg" />
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <JobPhotoButton jobId={id} entries={entries} onUploaded={load} onChanged={load} />
+            <JobQuickNote job={job} onSaved={load} />
           </div>
+        </div>
+        <dl className="mt-3 grid gap-1 text-sm">
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-muted-foreground">Current</dt>
+            <dd className="font-medium text-foreground">{formatJobStatus(job) || "—"}</dd>
+          </div>
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-muted-foreground">Next</dt>
+            <dd className="font-medium text-foreground">{nextJobAction(job, documents)}</dd>
+          </div>
+          {balanceLine && (
+            <div className="flex flex-wrap gap-x-2">
+              <dt className="text-muted-foreground">{balanceLine.label}</dt>
+              <dd className="font-semibold tabular-nums text-foreground">{money(balanceLine.value)}</dd>
+            </div>
+          )}
+        </dl>
+        <div className="mt-4 max-w-xl">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Lead, working, materials, and payment
+          </div>
+          <JobHeaderStatuses
+            job={job}
+            client={client}
+            workItems={workItems}
+            materialOrders={materialOrders}
+            onChange={changeTrack}
+          />
         </div>
         {job.description && <p className="text-sm text-muted-foreground mt-3">{job.description}</p>}
       </div>
@@ -352,8 +365,11 @@ export default function JobDetail() {
             client={client}
             documents={documents}
             onChanged={load}
-            entities={["Estimate"]}
-            title="Estimate"
+            hub
+            title="Documents"
+            openEntity={searchParams.get("doc")}
+            openDocumentId={searchParams.get("docId")}
+            onOpenTasks={() => setTab("tasks")}
           />
 
           {job.notes ? (

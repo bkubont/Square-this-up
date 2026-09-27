@@ -180,7 +180,7 @@ export default function JobKanbanCard({
               </button>
               <button
                 type="button"
-                title="Log payment"
+                title="Record payment"
                 disabled={busy}
                 className="p-1 rounded-md text-muted-foreground hover:text-emerald-700 hover:bg-emerald-50"
                 onPointerDown={stopCardAction}
@@ -294,7 +294,7 @@ export default function JobKanbanCard({
       <Dialog open={payOpen} onOpenChange={(open) => !busy && setPayOpen(open)}>
         <DialogContent className="max-w-xs" onPointerDownOutside={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle>Log payment</DialogTitle>
+            <DialogTitle>Record payment</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">{customerName}</p>
           <Input

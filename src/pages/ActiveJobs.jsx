@@ -63,7 +63,7 @@ export default function ActiveJobs() {
         description={
           loading
             ? "Lead, working, and payment jobs in play"
-            : `${jobs.length} active · non-terminal statuses across all phases`
+            : `${jobs.length} jobs still in progress, awaiting approval, or awaiting payment`
         }
         primaryAction={
           <Button

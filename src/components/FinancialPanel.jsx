@@ -134,7 +134,7 @@ export default function FinancialPanel({
       {block.logPayment && (
         <div>
           <label className="text-xs font-medium text-muted-foreground mb-1 block" htmlFor="overview-payment">
-            Add a payment
+            Record a payment
           </label>
           <div className="flex gap-2">
             <Input

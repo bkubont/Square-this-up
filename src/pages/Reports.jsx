@@ -73,7 +73,7 @@ export default function Reports() {
         description={
           loading
             ? "Money, jobs, and materials at a glance"
-            : `${jobs.length} job${jobs.length === 1 ? "" : "s"} · read-only rollups`
+            : `${jobs.length} job${jobs.length === 1 ? "" : "s"}`
         }
         secondary={
           <Link to="/jobs/outstanding" className="text-sm font-medium text-primary hover:underline px-2">
@@ -157,7 +157,7 @@ export default function Reports() {
                 {loading ? "…" : money(materialsCost)}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Derived from Material Orders on jobs — not edited here. Open a job’s Money tab for detail.
+                Derived from material orders on jobs. Open a job’s Overview for the quote, collected, and remaining.
               </p>
             </div>
           </section>

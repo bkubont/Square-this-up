@@ -70,7 +70,7 @@ export default function JobFormDialog({ open, onOpenChange, onSave, job = null, 
             <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Kitchen faucet replacement" />
           </div>
           <div>
-            <FieldLabel required>Client</FieldLabel>
+            <FieldLabel required>Customer</FieldLabel>
             <Select value={form.client_id} onValueChange={(v) => set("client_id", v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select client" />

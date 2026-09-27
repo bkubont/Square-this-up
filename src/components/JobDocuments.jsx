@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FileText, Plus } from "lucide-react";
 import { api } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -39,12 +39,32 @@ export default function JobDocuments({
   title = "Documents",
   emptyHint = null,
   className = "",
+  /** Overview hub: Estimate, work-on-Tasks, change orders, invoice. */
+  hub = false,
+  /** Open this document when the directory links in with ?doc=&docId= */
+  openEntity = null,
+  openDocumentId = null,
+  onOpenTasks = undefined,
 }) {
   const [openDoc, setOpenDoc] = useState(null);
   const [creating, setCreating] = useState(null);
+  const openedFromUrl = useRef("");
 
-  const allowedTypes = entities
-    ? DOCUMENT_TYPES.filter((t) => entities.includes(t.entity))
+  useEffect(() => {
+    if (!openEntity) return;
+    const key = `${openEntity}:${openDocumentId || ""}`;
+    if (openedFromUrl.current === key) return;
+    const match = documents.find((doc) =>
+      doc.entity === openEntity && (!openDocumentId || String(doc.id) === String(openDocumentId))
+    );
+    if (!match) return;
+    openedFromUrl.current = key;
+    setOpenDoc({ entity: match.entity, document: match });
+  }, [documents, openEntity, openDocumentId]);
+
+  const scope = hub ? ["Estimate", "ChangeOrder", "Invoice"] : entities;
+  const allowedTypes = scope
+    ? DOCUMENT_TYPES.filter((t) => scope.includes(t.entity))
     : DOCUMENT_TYPES;
   const allowedSet = new Set(allowedTypes.map((t) => t.entity));
 
@@ -155,7 +175,7 @@ export default function JobDocuments({
     <div className={cn("bg-white rounded-xl border border-slate-200 p-4", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{title}</div>
-        <div className="flex flex-wrap gap-1.5">
+        {!hub && <div className="flex flex-wrap gap-1.5">
           {allowedTypes.map((t) => {
             const gate = documentCreateAvailability(t.entity, documents);
             const singular = SINGLE_DOC_ENTITIES.has(t.entity);
@@ -181,17 +201,28 @@ export default function JobDocuments({
               </Button>
             );
           })}
-        </div>
+        </div>}
       </div>
 
-      {showStageHints && !accepted && allowedSet.has("Estimate") && (
+      {hub ? (
+        <DocumentHub
+          documents={documents}
+          creating={creating}
+          accepted={accepted}
+          onCreate={createDraft}
+          onOpen={(entity, document) => setOpenDoc({ entity, document })}
+          onOpenTasks={onOpenTasks}
+        />
+      ) : null}
+
+      {!hub && showStageHints && !accepted && allowedSet.has("Estimate") && (
         <p className="text-xs text-slate-500 mb-3">
           The quote is the whole line, materials included. Once the customer signs, each line becomes a job task
           (see Tasks).
         </p>
       )}
 
-      {sorted.length === 0 ? (
+      {!hub && (sorted.length === 0 ? (
         <div className="text-sm text-slate-400 py-4 text-center border border-dashed border-slate-200 rounded-lg">
           {emptyHint || defaultEmpty}
         </div>
@@ -225,7 +256,7 @@ export default function JobDocuments({
             </li>
           ))}
         </ul>
-      )}
+      ))}
 
       {openable.has("Estimate") && (
         <EstimateEditorDialog
@@ -271,5 +302,109 @@ export default function JobDocuments({
         />
       )}
     </div>
+  );
+}
+
+function latestStamp(doc) {
+  return doc?.updated_date || doc?.date || doc?.created_date || "";
+}
+
+function docsOf(documents, entity) {
+  return documents
+    .filter((doc) => doc.entity === entity)
+    .sort((a, b) => latestStamp(b).localeCompare(latestStamp(a)));
+}
+
+function HubAction({ children, disabled = false, onClick, title = undefined }) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-11 min-w-[5.5rem] text-xs shrink-0"
+      disabled={disabled}
+      title={title}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function HubDocRow({ entity, label, documents, creating, onCreate, onOpen }) {
+  const docs = docsOf(documents, entity);
+  const active = docs.find((doc) => doc.status !== "void") || null;
+  const shown = active || docs[0] || null;
+  const gate = documentCreateAvailability(entity, documents);
+  return (
+    <li className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">{label}</span>
+            {shown ? (
+              <StatusBadge status={shown.status} entity={entity} />
+            ) : (
+              <span className="text-xs text-muted-foreground">Not started</span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Last update {shown ? shortDate(latestStamp(shown)) : "—"}
+            {entity === "ChangeOrder" && docs.length > 1 ? ` · ${docs.length} change orders` : ""}
+          </div>
+          {!active && gate.reason ? (
+            <p className="text-xs text-muted-foreground mt-1">{gate.reason}</p>
+          ) : null}
+        </div>
+        {active ? (
+          <HubAction onClick={() => onOpen(entity, active)}>Open</HubAction>
+        ) : (
+          <HubAction
+            disabled={!!creating || !gate.available}
+            title={gate.reason}
+            onClick={() => onCreate(entity)}
+          >
+            {creating === entity ? "Creating…" : "Create"}
+          </HubAction>
+        )}
+      </div>
+      {entity === "ChangeOrder" && docs.length > 1 && (
+        <ul className="mt-2 divide-y divide-border">
+          {docs.map((doc) => (
+            <li key={doc.id}>
+              <button
+                type="button"
+                onClick={() => onOpen(entity, doc)}
+                className="w-full min-h-11 py-2 text-left text-xs text-foreground hover:text-primary"
+              >
+                {doc.number || "Change order"} · {doc.status} · {shortDate(latestStamp(doc))}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function DocumentHub({ documents, creating, accepted, onCreate, onOpen, onOpenTasks }) {
+  return (
+    <ul className="space-y-2">
+      <HubDocRow entity="Estimate" label="Estimate" documents={documents} creating={creating} onCreate={onCreate} onOpen={onOpen} />
+      <li className="rounded-lg border border-border bg-card p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-foreground">Work</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Work is on Tasks. There is no separate work order.
+              {!accepted ? " Tasks fill in after the customer accepts the estimate." : ""}
+            </p>
+          </div>
+          <HubAction onClick={onOpenTasks}>Open</HubAction>
+        </div>
+      </li>
+      <HubDocRow entity="ChangeOrder" label="Change orders" documents={documents} creating={creating} onCreate={onCreate} onOpen={onOpen} />
+      <HubDocRow entity="Invoice" label="Invoice" documents={documents} creating={creating} onCreate={onCreate} onOpen={onOpen} />
+    </ul>
   );
 }

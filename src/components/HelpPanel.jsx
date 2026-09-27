@@ -16,49 +16,45 @@ import { PRODUCT_NAME } from "@/lib/brand";
 const SECTIONS = [
   {
     title: "Dashboard",
-    body: "Start here for situational awareness — Needs Attention, summary money, active jobs, and recent activity. Not a menu of every feature.",
+    body: "Start with Needs Attention, then the money groups, active jobs, and recent activity.",
     to: "/",
     linkLabel: "Open Dashboard",
   },
   {
-    title: "Jobs & customers",
-    body: "Jobs is the hub for each project. Customers is the directory. Use Action items for materials and approval blockers; Board for status columns.",
+    title: "A job",
+    body: "Overview holds the quote and the documents (estimate, change orders, invoice). Tasks is the work. Costs is what you spent. Photos, Notes, and Timeline are the record of what happened. Record a payment from Overview when money comes in.",
     to: "/jobs/active",
     linkLabel: "Open Jobs",
   },
   {
-    title: "Documents on a job",
-    body: "One Estimate, one Work Order, and one Invoice per job. Accept the estimate before work order; complete the work order before invoicing. Change orders attach when scope shifts.",
-    to: "/estimates",
-    linkLabel: "Estimates",
+    title: "Jobs still open",
+    body: "Jobs still in progress, awaiting approval, or awaiting payment stay on the working lists. Paid, declined, and cancelled jobs move to the archive.",
+    to: "/jobs/active",
+    linkLabel: "Open Jobs",
+  },
+  {
+    title: "Customers",
+    body: "Customers is the directory. A job’s customer name opens that customer.",
+    to: "/clients",
+    linkLabel: "Open Customers",
   },
   {
     title: "Schedule",
-    body: "Day, week, and agenda views from job start dates. Jump into a job from a chip — not a full project-management calendar yet.",
+    body: "Day, week, and agenda views from job start dates.",
     to: "/schedule",
     linkLabel: "Open Schedule",
   },
   {
     title: "Expenses & receipts",
-    body: "Log spend under Expenses. Capture receipt photos under Receipts — unassigned photos land in an inbox until you attach a job.",
+    body: "Log spend under Expenses. Receipt photos that are not on a job yet sit in the Receipts inbox until you attach one.",
     to: "/receipts",
     linkLabel: "Receipts inbox",
   },
   {
     title: "Reports",
-    body: "Read-only money, status, and materials trends. Use Reports for decisions — deeper analysis stays off the Dashboard.",
+    body: "Issued invoices, uninvoiced deposits, and unbilled work are separate. Open a number to see the records in it.",
     to: "/reports",
     linkLabel: "Open Reports",
-  },
-  {
-    title: "Quick Add",
-    body: "The + control in the top bar starts a job, expense, receipt, or customer from almost anywhere.",
-  },
-  {
-    title: "Accounts",
-    body: "Registration is invitation-only. Ask your company admin for an invite link — there is no public self-serve signup.",
-    to: "/settings",
-    linkLabel: "Company settings",
   },
 ];
 

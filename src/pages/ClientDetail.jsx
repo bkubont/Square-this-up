@@ -83,12 +83,12 @@ export default function ClientDetail() {
   };
 
   if (loading) return <div className="p-8 text-slate-400">Loading…</div>;
-  if (!client) return <div className="p-8 text-slate-400">Client not found.</div>;
+  if (!client) return <div className="p-8 text-slate-400">Customer not found.</div>;
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
       <button onClick={() => navigate("/clients")} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Clients
+        <ArrowLeft className="w-4 h-4" /> Customers
       </button>
 
       <div className={cn("bg-white rounded-xl border border-slate-200 p-5 mb-6", statusCardClass(pipelineStatus))}>

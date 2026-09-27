@@ -1,4 +1,15 @@
 /** Shared labels for job-linked contractor documents. */
+
+/** Open a job document from a directory row. */
+export function jobDocumentHref(jobId, entity, docId) {
+  if (!jobId) return "/jobs/active";
+  const params = new URLSearchParams();
+  params.set("tab", "overview");
+  if (entity) params.set("doc", entity);
+  if (docId != null && docId !== "") params.set("docId", String(docId));
+  return `/jobs/${jobId}?${params.toString()}`;
+}
+
 export const DOCUMENT_TYPES = [
   { entity: 'Estimate', label: 'Estimate', createLabel: 'New Estimate' },
   { entity: 'MaterialOrder', label: 'Material Order', createLabel: 'New Material Order' },
