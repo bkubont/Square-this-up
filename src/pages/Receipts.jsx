@@ -61,12 +61,14 @@ export default function Receipts() {
       amount: e.amount,
       text: e.text,
       job_id: e.job_id,
+      expense_id: e.expense_id || "",
       mo: Boolean(e.related_material_order_id),
       date: e.created_date,
     }));
     const timelineUrls = new Set(fromTimeline.map((r) => r.photo_url).filter(Boolean));
+    const linkedExpenseIds = new Set(fromTimeline.map((r) => r.expense_id).filter(Boolean));
     const fromExpenses = expenses
-      .filter((e) => e.photo_url && e.job_id && !timelineUrls.has(e.photo_url))
+      .filter((e) => e.photo_url && e.job_id && !timelineUrls.has(e.photo_url) && !linkedExpenseIds.has(e.id))
       .map((e) => ({
         kind: "expense",
         id: e.id,
@@ -174,6 +176,7 @@ export default function Receipts() {
                           <Image src={item.photo_url} alt="" className="w-full aspect-square object-cover" />
                           <div className="p-1.5 text-[11px] text-muted-foreground truncate">
                             {item.mo ? "MO · " : ""}
+                            {item.expense_id ? "Expense · " : ""}
                             {item.amount != null ? money(item.amount) : shortDate(item.date)}
                           </div>
                         </Link>

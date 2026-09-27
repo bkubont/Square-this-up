@@ -110,6 +110,7 @@ export default function ExpenseFormDialog({
           type: "receipt",
           category: "receipt",
           photo_url: saved.photo_url,
+          expense_id: saved.id,
           amount: saved.amount || undefined,
           text: saved.vendor || saved.note || saved.category || "Receipt",
         });

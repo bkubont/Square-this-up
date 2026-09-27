@@ -8,7 +8,9 @@ import StatusBadge from "@/components/StatusBadge";
 import { useJobCardData, JobCustomer, JobRunningTotal, JobQuickAdd } from "@/components/JobCardInfo";
 import { Button } from "@/components/ui/button";
 import { money, shortDate } from "@/lib/format";
+import FilterChips, { JOB_SORTS, SortSelect } from "@/components/FilterChips";
 import { depositsByJobId, invoicesByJobId, isActiveJob, isWorkingJob, jobBalance, paymentsByJobId } from "@/lib/jobFilters";
+import { jobPhase, sortJobs } from "@/lib/listSort";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { statusCardClass } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,8 @@ export default function ActiveJobs() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [jobDialog, setJobDialog] = useState(false);
+  const [phase, setPhase] = useState("all");
+  const [sort, setSort] = useState("updated");
 
   const { clientsById, summaries, reload } = useJobCardData();
 
@@ -49,6 +53,10 @@ export default function ActiveJobs() {
   const paymentsMap = useMemo(() => paymentsByJobId(timeline), [timeline]);
   const depositsMap = useMemo(() => depositsByJobId(timeline), [timeline]);
   const invoiceMap = useMemo(() => invoicesByJobId(invoices), [invoices]);
+  const shown = useMemo(() => {
+    const filtered = phase === "all" ? jobs : jobs.filter((job) => jobPhase(job) === phase);
+    return sortJobs(filtered, sort, clientsById);
+  }, [jobs, phase, sort, clientsById]);
 
   const saveJob = async (form) => {
     const created = await api.entities.Job.create(form);
@@ -63,7 +71,9 @@ export default function ActiveJobs() {
         description={
           loading
             ? "Lead, working, and payment jobs in play"
-            : `${jobs.length} jobs still in progress, awaiting approval, or awaiting payment`
+            : phase === "all"
+              ? `${jobs.length} jobs still in progress, awaiting approval, or awaiting payment`
+              : `${shown.length} in ${phase}`
         }
         primaryAction={
           <Button
@@ -88,16 +98,31 @@ export default function ActiveJobs() {
         }
       />
 
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <FilterChips
+          label="Job phase"
+          value={phase}
+          onChange={setPhase}
+          options={[
+            { id: "all", label: "All" },
+            { id: "lead", label: "Lead" },
+            { id: "working", label: "Working" },
+            { id: "payment", label: "Payment" },
+          ]}
+        />
+        <SortSelect value={sort} onChange={setSort} options={JOB_SORTS} />
+      </div>
+
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>
-      ) : jobs.length === 0 ? (
+      ) : shown.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <ActiveIcon className="w-12 h-12 mx-auto mb-3 opacity-40" strokeWidth={1.5} />
           <p>No active jobs.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {jobs.map((j) => {
+          {shown.map((j) => {
             const balance = jobBalance(j, paymentsMap[j.id] || 0, depositsMap[j.id] || 0, invoiceMap[j.id]);
             return (
               <Link

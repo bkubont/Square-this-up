@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
+import { JOB_SORTS, SortSelect } from "@/components/FilterChips";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { useJobCardData, JobCustomer, JobRunningTotal, JobQuickAdd } from "@/components/JobCardInfo";
@@ -8,6 +9,7 @@ import { money, shortDate } from "@/lib/format";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NAV_ICONS } from "@/lib/navIcons";
 import { depositsByJobId, invoicesByJobId, JOB_STATUSES, jobBalance, paymentsByJobId } from "@/lib/jobFilters";
+import { sortJobs } from "@/lib/listSort";
 import { statusCardClass, statusColors } from "@/lib/statusColors";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,7 @@ export default function AllJobs() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const [sort, setSort] = useState("updated");
 
   const { clientsById, summaries, reload } = useJobCardData();
 
@@ -43,7 +46,10 @@ export default function AllJobs() {
   const paymentsMap = useMemo(() => paymentsByJobId(timeline), [timeline]);
   const depositsMap = useMemo(() => depositsByJobId(timeline), [timeline]);
   const invoiceMap = useMemo(() => invoicesByJobId(invoices), [invoices]);
-  const shown = filter === "All" ? jobs : jobs.filter((j) => j.status === filter);
+  const shown = useMemo(() => {
+    const filtered = filter === "All" ? jobs : jobs.filter((j) => j.status === filter);
+    return sortJobs(filtered, sort, clientsById);
+  }, [jobs, filter, sort, clientsById]);
   const filterColors = filter === "All" ? null : statusColors(filter);
 
   return (
@@ -89,6 +95,10 @@ export default function AllJobs() {
           </>
         }
       />
+
+      <div className="mb-4">
+        <SortSelect value={sort} onChange={setSort} options={JOB_SORTS} />
+      </div>
 
       {loading ? (
         <p className="text-muted-foreground">Loading…</p>

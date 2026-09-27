@@ -2,8 +2,9 @@ import ClientAddress from "@/components/ClientAddress";
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "@/api/client";
-import { ArrowLeft, Pencil, Phone, StickyNote, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Phone, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import JobHeaderStatuses from "@/components/JobHeaderStatuses";
@@ -267,9 +268,18 @@ export default function JobDetail() {
           <Button variant="outline" size="sm" onClick={() => setEditJob(true)}>
             <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
           </Button>
-          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={deleteJob}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" aria-label="More job actions">
+                More
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="text-red-600" onClick={deleteJob}>
+                Delete job
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
